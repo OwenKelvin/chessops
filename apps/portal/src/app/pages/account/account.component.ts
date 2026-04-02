@@ -1,7 +1,16 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { form, required, minLength } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import {
+  FieldTree,
+  FormField,
+  FormRoot,
+  form,
+  required,
+  minLength,
+  TreeValidationResult,
+} from '@angular/forms/signals';
+import { firstValueFrom } from 'rxjs';
 
 interface PasswordChangeModel {
   currentPassword: string;
@@ -10,7 +19,7 @@ interface PasswordChangeModel {
 
 @Component({
   selector: 'app-account-page',
-  imports: [HttpClientModule],
+  imports: [FormField, FormRoot],
   template: `
     <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl mx-auto space-y-8">
@@ -62,31 +71,35 @@ interface PasswordChangeModel {
         <!-- Change Password Section -->
         <div class="bg-white shadow rounded-lg p-6">
           <h2 class="text-lg font-medium text-gray-900 mb-4">Change Password</h2>
-          <form (ngSubmit)="onChangePassword()" class="space-y-4">
+          <form class="space-y-4" [formRoot]="passwordForm">
             <div>
               <label class="block text-sm font-medium text-gray-700">Current Password</label>
               <input type="password" [formField]="passwordForm.currentPassword"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              @if (passwordForm.currentPassword.touched() && !passwordForm.currentPassword.valid()) {
-                <span class="text-red-500 text-xs">{{ passwordForm.currentPassword.errors()[0]?.message }}</span>
+              @if (passwordForm.currentPassword().touched() && !passwordForm.currentPassword().valid()) {
+                <span class="text-red-500 text-xs">{{ passwordForm.currentPassword().errors()[0]?.message }}</span>
               }
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">New Password</label>
               <input type="password" [formField]="passwordForm.newPassword"
                 class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              @if (passwordForm.newPassword.touched() && !passwordForm.newPassword.valid()) {
-                <span class="text-red-500 text-xs">{{ passwordForm.newPassword.errors()[0]?.message }}</span>
+              @if (passwordForm.newPassword().touched() && !passwordForm.newPassword().valid()) {
+                <span class="text-red-500 text-xs">{{ passwordForm.newPassword().errors()[0]?.message }}</span>
               }
             </div>
 
-            @if (passwordMessage()) {
-              <p [class]="passwordMessageClass()">{{ passwordMessage() }}</p>
+            @if (passwordForm().errors().length > 0) {
+              <p class="text-sm text-red-600">{{ passwordForm().errors()[0]?.message }}</p>
             }
 
-            <button type="submit" [disabled]="loading() || !passwordForm.valid()"
+            <button type="submit" [disabled]="passwordForm().submitting()"
               class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
-              {{ loading() ? 'Updating...' : 'Update Password' }}
+              @if (passwordForm().submitting()) {
+                <span>Updating...</span>
+              } @else {
+                <span>Update Password</span>
+              }
             </button>
           </form>
         </div>
@@ -103,15 +116,43 @@ interface PasswordChangeModel {
   `,
 })
 export class AccountPageComponent implements OnInit {
+  passwordFormValue = signal<PasswordChangeModel>({
+    currentPassword: '',
+    newPassword: '',
+  });
+
+  submitPasswordChange = async (field: FieldTree<PasswordChangeModel>) => {
+    try {
+      await firstValueFrom(
+        this.http.post('http://localhost:3000/api/auth/change-password', {
+          currentPassword: field.currentPassword().value(),
+          newPassword: field.newPassword().value(),
+        }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+        }),
+      );
+      this.passwordMessage.set('Password updated successfully');
+      this.passwordMessageClass.set('text-sm text-green-600');
+      return undefined as TreeValidationResult;
+    } catch (err: any) {
+      return {
+        kind: 'server',
+        message: err.error?.message || 'Failed to update password',
+      } as TreeValidationResult;
+    }
+  };
+
   passwordForm = form<PasswordChangeModel>(
-    {
-      currentPassword: '',
-      newPassword: '',
-    },
+    this.passwordFormValue,
     (form) => {
       required(form.currentPassword, { message: 'Current password is required' });
       required(form.newPassword, { message: 'New password is required' });
       minLength(form.newPassword, 8, { message: 'Password must be at least 8 characters' });
+    },
+    {
+      submission: {
+        action: this.submitPasswordChange,
+      },
     },
   );
 
@@ -119,7 +160,6 @@ export class AccountPageComponent implements OnInit {
   mfaEnabled = signal<boolean | null>(null);
   passwordMessage = signal('');
   passwordMessageClass = signal('text-sm');
-  loading = signal(false);
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -172,32 +212,6 @@ export class AccountPageComponent implements OnInit {
     });
   }
 
-  onChangePassword() {
-    if (!this.passwordForm.valid()) return;
-
-    this.loading.set(true);
-    this.passwordMessage.set('');
-
-    const value = this.passwordForm.value;
-    this.http.post('http://localhost:3000/api/auth/change-password', {
-      currentPassword: value.currentPassword,
-      newPassword: value.newPassword,
-    }, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-    }).subscribe({
-      next: () => {
-        this.passwordMessage.set('Password updated successfully');
-        this.passwordMessageClass.set('text-sm text-green-600');
-        this.passwordForm.reset();
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.passwordMessage.set(err.error?.message || 'Failed to update password');
-        this.passwordMessageClass.set('text-sm text-red-600');
-        this.loading.set(false);
-      },
-    });
-  }
 
   revokeAllSessions() {
     if (!confirm('This will sign you out of all devices. Continue?')) return;

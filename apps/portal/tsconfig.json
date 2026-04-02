@@ -1,10 +1,13 @@
 {
-  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "noPropertyAccessFromIndexSignature": true,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
-    "module": "preserve"
+    "module": "preserve",
+    "lib": ["es2022", "dom"],
+    "target": "es2022",
+    "strict": true,
+    "skipLibCheck": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
