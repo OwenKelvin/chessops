@@ -30,6 +30,7 @@
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
+    "@analogjs/vitest-angular": "^2.4.0",
     "@angular-devkit/core": "~21.2.0",
     "@angular-devkit/schematics": "~21.2.0",
     "@angular/build": "~21.2.0",
@@ -48,6 +49,7 @@
     "@nx/nest": "22.6.4",
     "@nx/node": "22.6.4",
     "@nx/playwright": "22.6.4",
+    "@nx/vite": "^22.6.4",
     "@nx/web": "22.6.4",
     "@nx/webpack": "22.6.4",
     "@nx/workspace": "22.6.4",
@@ -61,18 +63,22 @@
     "@types/multer": "^2.1.0",
     "@types/node": "20.19.9",
     "@typescript-eslint/utils": "^8.40.0",
+    "@vitest/ui": "^4.1.2",
     "angular-eslint": "^21.2.0",
+    "class-variance-authority": "^0.7.1",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-playwright": "^1.6.2",
     "jsdom": "^27.1.0",
+    "ng-packagr": "^21.2.2",
     "nx": "22.6.4",
     "prettier": "~3.6.2",
     "prisma": "^7.6.0",
+    "tailwind-merge": "^3.5.0",
     "tslib": "^2.3.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.40.0",
-    "vitest": "^4.0.8",
+    "vitest": "^4.1.2",
     "webpack-cli": "^5.1.4"
   }
 }

@@ -1,19 +1,7 @@
 {
-  "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "declaration": true,
-    "declarationMap": true,
-    "inlineSources": true,
-    "types": ["node"]
-  },
-  "exclude": ["src/**/*.spec.ts", "src/**/*.mock.ts", "src/**/*.stories.ts", "src/**/*.test.ts"],
-  "include": ["src/**/*.ts"],
   "extends": "./tsconfig.lib.json",
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": true,
-    "compilationMode": "partial"
-  }
+  "compilerOptions": {
+    "declarationMap": false
+  },
+  "angularCompilerOptions": {}
 }
