@@ -7,6 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { MfaModule } from '../mfa/mfa.module';
 import { MailModule } from '../mail/mail.module';
 import { AdminModule } from '../admin/admin.module';
+import { ApiKeyModule } from '../api-key/api-key.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AdminModule } from '../admin/admin.module';
     MfaModule,
     MailModule,
     AdminModule,
+    ApiKeyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
