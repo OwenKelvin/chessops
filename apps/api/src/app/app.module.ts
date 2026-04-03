@@ -10,6 +10,7 @@ import { AdminModule } from '../admin/admin.module';
 import { ApiKeyModule } from '../api-key/api-key.module';
 import { AppRegistrationModule } from '../app-registration/app-registration.module';
 import { WebhookModule } from '../webhook/webhook.module';
+import { TournamentModule } from '../tournament/tournament.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { WebhookModule } from '../webhook/webhook.module';
     ApiKeyModule,
     AppRegistrationModule,
     WebhookModule,
+    TournamentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

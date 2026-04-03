@@ -28,6 +28,8 @@ model User {
   emailVerification EmailVerification?
   apiKeys         ApiKey[]
   apps            App[]
+  tournaments     Tournament[]
+  players         Player[]
 
   @@index([email])
 }
@@ -177,4 +179,131 @@ model WebhookDelivery {
   @@index([appId])
   @@index([status])
   @@index([nextRetryAt])
+}
+
+// Tournament Models
+
+model Tournament {
+  id              String   @id @default(cuid())
+  ownerId         String   // User who created the tournament
+  name            String
+  description     String?
+  location        String?
+  startDate       DateTime
+  endDate         DateTime?
+  status          String   @default("draft") // draft, registration, active, completed, cancelled
+  format          String   @default("swiss") // swiss, roundrobin, elimination
+  maxRounds       Int      @default(9)
+  timeControl     String?  // e.g., "90+30", "5+0"
+  maxPlayers      Int?
+  isPublic        Boolean  @default(true)
+  registrationOpen Boolean @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  owner       User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  players     TournamentPlayer[]
+  rounds      Round[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model TournamentPlayer {
+  id            String   @id @default(cuid())
+  tournamentId  String
+  playerId      String   // Reference to Player model
+  seed          Int      @default(0)
+  rating        Int?
+  status        String   @default("active") // active, withdrawn, expelled
+  withdrawRound Int?     // Round number when withdrawn
+  createdAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player   Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  results  Result[]
+
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId])
+}
+
+model Player {
+  id            String   @id @default(cuid())
+  ownerId       String   // User who owns this player profile
+  firstName     String
+  lastName      String
+  email         String?
+  fideId        String?  // FIDE ID
+  nationalId    String?
+  rating        Int      @default(0)
+  dateOfBirth   DateTime?
+  gender        String?  // M, F, O
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner         User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tournaments   TournamentPlayer[]
+  pairingsWhite Pairing[]        @relation("PairingWhite")
+  pairingsBlack Pairing[]        @relation("PairingBlack")
+
+  @@index([ownerId])
+  @@index([fideId])
+}
+
+model Round {
+  id            String   @id @default(cuid())
+  tournamentId  String
+  roundNumber   Int
+  name          String?
+  status        String   @default("pending") // pending, published, completed
+  publishedAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  pairings   Pairing[]
+
+  @@unique([tournamentId, roundNumber])
+  @@index([tournamentId])
+}
+
+model Pairing {
+  id            String   @id @default(cuid())
+  roundId       String
+  whiteId       String   // Player ID
+  blackId       String   // Player ID
+  boardNumber   Int?
+  result        String?  // 1-0, 0-1, 1/2-1/2, *-# (unplayed)
+  whiteScore    Float?   // 1, 0.5, 0
+  blackScore    Float?   // 1, 0.5, 0
+  status        String   @default("pending") // pending, completed
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  round   Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  white   Player @relation(fields: [whiteId], references: [id], name: "PairingWhite")
+  black   Player @relation(fields: [blackId], references: [id], name: "PairingBlack")
+
+  @@index([roundId])
+  @@index([whiteId])
+  @@index([blackId])
+}
+
+model Result {
+  id                 String   @id @default(cuid())
+  tournamentId       String
+  playerId           String
+  tournamentPlayerId String   @unique
+  roundId            String
+  opponentId         String
+  color              String   // W, B
+  result             String   // 1, 0.5, 0 (from player's perspective)
+  createdAt          DateTime @default(now())
+
+  tournamentPlayer TournamentPlayer @relation(fields: [tournamentPlayerId], references: [id], onDelete: Cascade)
+
+  @@index([tournamentId])
+  @@index([playerId])
+  @@index([roundId])
 }
