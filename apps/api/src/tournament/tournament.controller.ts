@@ -8,7 +8,7 @@ import {
   Param,
   Query,
   UseGuards,
-  Request,
+  Req,
   BadRequestException,
 } from '@nestjs/common';
 import { TournamentService } from './tournament.service';
@@ -21,13 +21,13 @@ export class TournamentController {
   constructor(private tournamentService: TournamentService) {}
 
   @Post()
-  async create(@Request() req, @Body() createDto: CreateTournamentDto) {
+  async create(@Req() req: any, @Body() createDto: CreateTournamentDto) {
     return this.tournamentService.create(req.user.userId, createDto);
   }
 
   @Get()
   async findAll(
-    @Request() req,
+    @Req() req: any,
     @Query('status') status?: string,
     @Query('isPublic') isPublic?: boolean,
   ) {
@@ -38,13 +38,13 @@ export class TournamentController {
   }
 
   @Get(':id')
-  async findOne(@Request() req, @Param('id') id: string) {
+  async findOne(@Req() req: any, @Param('id') id: string) {
     return this.tournamentService.findOne(id, req.user.userId);
   }
 
   @Patch(':id')
   async update(
-    @Request() req,
+    @Req() req: any,
     @Param('id') id: string,
     @Body() updateDto: UpdateTournamentDto,
   ) {
@@ -52,14 +52,14 @@ export class TournamentController {
   }
 
   @Delete(':id')
-  async delete(@Request() req, @Param('id') id: string) {
+  async delete(@Req() req: any, @Param('id') id: string) {
     return this.tournamentService.delete(id, req.user.userId);
   }
 
   // Player management
   @Post(':id/players')
   async addPlayer(
-    @Request() req,
+    @Req() req: any,
     @Param('id') tournamentId: string,
     @Body() body: { playerId: string; seed?: number; rating?: number },
   ) {
@@ -76,7 +76,7 @@ export class TournamentController {
 
   @Delete(':id/players/:playerId')
   async removePlayer(
-    @Request() req,
+    @Req() req: any,
     @Param('id') tournamentId: string,
     @Param('playerId') playerId: string,
   ) {
