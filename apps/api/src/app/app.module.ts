@@ -14,6 +14,8 @@ import { TournamentModule } from '../tournament/tournament.module';
 import { PlayerModule } from '../player/player.module';
 import { PairingModule } from '../pairing/pairing.module';
 import { TiebreakModule } from '../tiebreak/tiebreak.module';
+import { ExportModule } from '../export/export.module';
+import { ImportModule } from '../import/import.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { TiebreakModule } from '../tiebreak/tiebreak.module';
     PlayerModule,
     PairingModule,
     TiebreakModule,
+    ExportModule,
+    ImportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
