@@ -9,6 +9,7 @@ import { MailModule } from '../mail/mail.module';
 import { AdminModule } from '../admin/admin.module';
 import { ApiKeyModule } from '../api-key/api-key.module';
 import { AppRegistrationModule } from '../app-registration/app-registration.module';
+import { WebhookModule } from '../webhook/webhook.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AppRegistrationModule } from '../app-registration/app-registration.modu
     AdminModule,
     ApiKeyModule,
     AppRegistrationModule,
+    WebhookModule,
   ],
   controllers: [AppController],
   providers: [AppService],
