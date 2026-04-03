@@ -12,6 +12,7 @@ import { AppRegistrationModule } from '../app-registration/app-registration.modu
 import { WebhookModule } from '../webhook/webhook.module';
 import { TournamentModule } from '../tournament/tournament.module';
 import { PlayerModule } from '../player/player.module';
+import { PairingModule } from '../pairing/pairing.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PlayerModule } from '../player/player.module';
     WebhookModule,
     TournamentModule,
     PlayerModule,
+    PairingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
