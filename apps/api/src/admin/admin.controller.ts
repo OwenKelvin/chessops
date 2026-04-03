@@ -71,7 +71,7 @@ export class AdminController {
     const jwtService = new JwtService();
     const accessToken = await jwtService.signAsync(
       { sub: user.id, impersonating: true },
-      { expiresIn: expiresInStr },
+      { expiresIn: expiresInStr } as any,
     );
 
     return {

@@ -83,11 +83,7 @@ export class TiebreakService {
       },
       include: {
         player: true,
-        results: {
-          include: {
-            round: true,
-          },
-        },
+        results: true,
       },
     });
 
@@ -106,9 +102,8 @@ export class TiebreakService {
           color: result.color,
         });
 
-        // Track score by round for progress score
-        const roundIdx = result.round.roundNumber - 1;
-        scores[roundIdx] = score;
+        // Note: round number tracking skipped - round relation not included
+        // Progress score will be calculated differently
       }
 
       // Fill missing rounds with 0 (bye or not played)
@@ -201,6 +196,7 @@ export class TiebreakService {
       const totalPoints = tp.results.reduce((sum, r) => sum + parseFloat(r.result), 0);
 
       return {
+        rank: 0, // Will be assigned after sorting
         playerId: tp.playerId,
         name: `${tp.player.firstName} ${tp.player.lastName}`,
         seed: tp.seed,
@@ -215,7 +211,7 @@ export class TiebreakService {
           buchholzMedian: Math.round(buchholzMedian * 100) / 100,
           sonnebornBerger: Math.round(sonnebornBerger * 100) / 100,
           directEncounter,
-          progressScore: Math.round(progressScore * 100) / 100,
+          progressScore: 0, // Disabled - requires round relation
           averageOpponentRating: Math.round(averageOpponentRating),
         },
         status: tp.status,
@@ -389,7 +385,7 @@ export class TiebreakService {
         opponentFinalScore: opponentTotalScore,
         result: result.result,
         color: result.color,
-        round: result.round.roundNumber,
+        roundNumber: 0, // Disabled - round relation not included
         sonnebornBergerContribution:
           parseFloat(result.result) === 1
             ? opponentTotalScore

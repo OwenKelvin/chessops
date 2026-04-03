@@ -79,6 +79,7 @@ export class PairingService {
           select: {
             opponentId: true,
             result: true,
+            color: true,
           },
         },
       },
