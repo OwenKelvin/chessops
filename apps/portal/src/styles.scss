@@ -1,3 +1,104 @@
 @use 'tailwindcss';
 
-/* You can add global styles to this file, and also import other style files */
+@theme inline {
+  /* Wood Chess Theme - Semantic Color Palette */
+
+  /* Base colors */
+  --color-walnut: #3B1F0E;
+  --color-rosewood: #6B2D1A;
+  --color-chestnut: #A0522D;
+  --color-caramel: #C4742B;
+  --color-honey: #D4894A;
+  --color-maple: #E8B87D;
+  --color-cream: #F4E0C2;
+  --color-ivory: #FAF3E0;
+  --color-linen: #FFF8F0;
+  --color-mahogany: #8B3A2A;
+
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'Crimson Pro', Georgia, serif;
+
+  /* Semantic mappings - Light mode */
+  --color-primary: var(--color-walnut);
+  --color-primary-hover: var(--color-rosewood);
+  --color-primary-foreground: var(--color-linen);
+
+  --color-secondary: var(--color-mahogany);
+  --color-secondary-hover: var(--color-rosewood);
+  --color-secondary-foreground: var(--color-linen);
+
+  --color-accent: var(--color-chestnut);
+  --color-accent-hover: var(--color-rosewood);
+  --color-accent-foreground: var(--color-linen);
+
+  --color-ghost: var(--color-maple);
+  --color-ghost-hover: var(--color-ivory);
+  --color-ghost-foreground: var(--color-walnut);
+
+  --color-background: var(--color-linen);
+  --color-foreground: var(--color-walnut);
+
+  --color-surface: var(--color-ivory);
+  --color-surface-elevated: var(--color-cream);
+
+  --color-muted: var(--color-mahogany);
+  --color-muted-foreground: var(--color-maple);
+
+  --color-border: var(--color-caramel);
+  --color-border-light: var(--color-maple);
+
+  --color-ring: var(--color-chestnut);
+
+  /* Status colors - warm wood tones */
+  --color-error: #8B3A2A;
+  --color-error-foreground: var(--color-linen);
+  --color-error-light: #F5E6E4;
+
+  --color-success: #5A7C5E;
+  --color-success-foreground: var(--color-linen);
+  --color-success-light: #E8F0E9;
+
+  --color-warning: #C4742B;
+  --color-warning-foreground: var(--color-linen);
+  --color-warning-light: #F9F0E6;
+
+  --color-info: #D4894A;
+  --color-info-foreground: var(--color-linen);
+  --color-info-light: #FBF4ED;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  @apply bg-background text-foreground font-body;
+}
+
+body {
+  @apply m-0 min-h-screen;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-display font-bold text-primary;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--color-walnut);
+    --color-foreground: var(--color-cream);
+    --color-surface: #2D1810;
+    --color-surface-elevated: #3B1F0E;
+    --color-primary: var(--color-cream);
+    --color-primary-hover: var(--color-maple);
+    --color-primary-foreground: var(--color-walnut);
+    --color-muted: var(--color-maple);
+    --color-muted-foreground: var(--color-honey);
+    --color-border: var(--color-rosewood);
+    --color-border-light: var(--color-walnut);
+    --color-ring: var(--color-honey);
+  }
+}

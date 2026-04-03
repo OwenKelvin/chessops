@@ -1,13 +1,13 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const cardVariants = cva(
-  'block bg-white rounded-lg',
+  'block bg-surface rounded-lg',
   {
     variants: {
       variant: {
         default: 'shadow-sm',
-        elevated: 'shadow-md',
-        outlined: 'border border-gray-200 shadow-none',
+        elevated: 'shadow-md bg-surface-elevated',
+        outlined: 'border border-border shadow-none',
       },
       padding: {
         true: 'p-4',

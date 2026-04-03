@@ -28,7 +28,7 @@ export const tableVariants = cva(
 export type TableVariants = VariantProps<typeof tableVariants>;
 
 export const tableHeaderVariants = cva(
-  'px-4 py-3 text-left font-semibold text-gray-700 border-b border-gray-200',
+  'px-4 py-3 text-left font-semibold text-foreground border-b border-border',
   {
     variants: {
       align: {
@@ -37,7 +37,7 @@ export const tableHeaderVariants = cva(
         right: 'text-right',
       },
       sortable: {
-        true: 'cursor-pointer select-none hover:bg-gray-50',
+        true: 'cursor-pointer select-none hover:bg-surface-elevated',
         false: '',
       },
     },
@@ -49,7 +49,7 @@ export const tableHeaderVariants = cva(
 );
 
 export const tableCellVariants = cva(
-  'px-4 py-3 border-b border-gray-100',
+  'px-4 py-3 border-b border-border text-foreground',
   {
     variants: {
       align: {

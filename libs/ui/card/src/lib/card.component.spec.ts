@@ -19,7 +19,7 @@ describe('CardComponent', () => {
 
   it('should generate card class with default variant', () => {
     const component = new CardComponent();
-    expect(component.cardClass).toContain('bg-white');
+    expect(component.cardClass).toContain('bg-surface');
     expect(component.cardClass).toContain('shadow-sm');
   });
 
@@ -27,6 +27,7 @@ describe('CardComponent', () => {
     const component = new CardComponent();
     component.variant = 'elevated';
     expect(component.cardClass).toContain('shadow-md');
+    expect(component.cardClass).toContain('bg-surface-elevated');
   });
 
   it('should generate card class without padding', () => {

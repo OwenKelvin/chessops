@@ -5,11 +5,12 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500',
-        secondary: 'bg-gray-500 text-white hover:bg-gray-600 focus-visible:ring-gray-400',
-        danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
-        ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-400',
-        outline: 'border border-gray-300 bg-transparent hover:bg-gray-100 focus-visible:ring-gray-400',
+        primary: 'bg-primary text-primary-foreground hover:bg-primary-hover focus-visible:ring-primary',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary-hover focus-visible:ring-secondary',
+        accent: 'bg-accent text-accent-foreground hover:bg-accent-hover focus-visible:ring-accent',
+        ghost: 'bg-ghost text-ghost-foreground hover:bg-ghost-hover focus-visible:ring-ghost',
+        outline: 'border border-border bg-transparent text-foreground hover:bg-surface focus-visible:ring-ring',
+        danger: 'bg-error text-error-foreground hover:bg-error/90 focus-visible:ring-error',
       },
       size: {
         sm: 'h-8 px-3 text-sm',
