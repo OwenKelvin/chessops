@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": ["jasmine", "node"]
+  },
+  "include": ["src/**/*.spec.ts", "src/**/*.mock.ts", "src/**/*.test.ts", "src/**/*.d.ts"],
+  "extends": "./tsconfig.json",
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

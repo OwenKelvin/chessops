@@ -17,5 +17,11 @@
     "strict": true,
     "target": "es2022",
     "customConditions": ["@chessops/source"]
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
   }
 }

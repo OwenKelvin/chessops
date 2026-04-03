@@ -58,6 +58,16 @@
       "options": {
         "targetName": "e2e"
       }
+    },
+    {
+      "plugin": "@nx/angular/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "serveTargetName": "serve",
+        "e2eTargetName": "e2e",
+        "testTargetName": "test",
+        "lintTargetName": "lint"
+      }
     }
   ],
   "targetDefaults": {
