@@ -5,9 +5,8 @@ import {
   Res,
   UseGuards,
   Req,
-  Query,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { type Response } from 'express';
 import { ExportService } from './export.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
