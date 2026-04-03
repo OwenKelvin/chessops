@@ -8,6 +8,7 @@ import { MfaModule } from '../mfa/mfa.module';
 import { MailModule } from '../mail/mail.module';
 import { AdminModule } from '../admin/admin.module';
 import { ApiKeyModule } from '../api-key/api-key.module';
+import { AppRegistrationModule } from '../app-registration/app-registration.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ApiKeyModule } from '../api-key/api-key.module';
     MailModule,
     AdminModule,
     ApiKeyModule,
+    AppRegistrationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
