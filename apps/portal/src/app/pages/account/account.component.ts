@@ -11,6 +11,9 @@ import {
   TreeValidationResult,
 } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
+import { InputComponent } from '@chessops/ui/input';
+import { ButtonComponent } from '@chessops/ui/button';
+import { CardComponent } from '@chessops/ui/card';
 
 interface PasswordChangeModel {
   currentPassword: string;
@@ -19,98 +22,158 @@ interface PasswordChangeModel {
 
 @Component({
   selector: 'app-account-page',
-  imports: [FormField, FormRoot],
+  imports: [
+    FormField,
+    FormRoot,
+    InputComponent,
+    ButtonComponent,
+    CardComponent,
+  ],
   template: `
-    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-3xl mx-auto space-y-8">
+    <div class="min-h-screen bg-surface py-12 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl mx-auto space-y-6">
         <div class="flex justify-between items-center">
-          <h1 class="text-3xl font-bold text-gray-900">Account Settings</h1>
-          <button (click)="logout()" class="text-sm text-red-600 hover:text-red-500">Sign out</button>
+          <h1 class="text-3xl font-bold text-foreground">Account Settings</h1>
+          <chessops-button (onClick)="logout()" variant="ghost" size="sm"
+            >Sign out</chessops-button
+          >
         </div>
 
         <!-- Profile Section -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Profile</h2>
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Profile"
+          [padding]="true"
+        >
           @if (user()) {
             <div class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-500">Email</label>
-                <p class="mt-1 text-gray-900">{{ user()?.email }}</p>
+                <label class="block text-sm font-medium text-muted"
+                  >Email</label
+                >
+                <p class="mt-1 text-foreground">{{ user()?.email }}</p>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-500">Display Name</label>
-                <p class="mt-1 text-gray-900">{{ user()?.displayName }}</p>
+                <label class="block text-sm font-medium text-muted"
+                  >Display Name</label
+                >
+                <p class="mt-1 text-foreground">{{ user()?.displayName }}</p>
               </div>
             </div>
           } @else {
-            <p class="text-gray-500">Loading...</p>
+            <p class="text-muted">Loading...</p>
           }
-        </div>
+        </chessops-card>
 
         <!-- MFA Section -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Two-Factor Authentication</h2>
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Two-Factor Authentication"
+          [padding]="true"
+        >
           @if (mfaEnabled() === null) {
-            <p class="text-gray-500">Loading...</p>
+            <p class="text-muted">Loading...</p>
           } @else if (mfaEnabled()) {
             <div class="flex items-center justify-between">
               <div class="flex items-center">
-                <svg class="h-6 w-6 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                <svg
+                  class="h-6 w-6 text-success mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  ></path>
                 </svg>
-                <span class="text-gray-900">MFA is enabled</span>
+                <span class="text-foreground">MFA is enabled</span>
               </div>
-              <button (click)="disableMfa()" class="text-sm text-red-600 hover:text-red-500">Disable</button>
+              <chessops-button
+                (onClick)="disableMfa()"
+                variant="ghost"
+                size="sm"
+                >Disable</chessops-button
+              >
             </div>
           } @else {
-            <p class="text-gray-500 mb-4">Two-factor authentication is not enabled</p>
-            <button (click)="enableMfa()" class="text-sm text-indigo-600 hover:text-indigo-500">Enable MFA</button>
+            <p class="text-muted mb-4">
+              Two-factor authentication is not enabled
+            </p>
+            <chessops-button (onClick)="enableMfa()" variant="primary" size="sm"
+              >Enable MFA</chessops-button
+            >
           }
-        </div>
+        </chessops-card>
 
         <!-- Change Password Section -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Change Password</h2>
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Change Password"
+          [padding]="true"
+        >
           <form class="space-y-4" [formRoot]="passwordForm">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Current Password</label>
-              <input type="password" [formField]="passwordForm.currentPassword"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              @if (passwordForm.currentPassword().touched() && !passwordForm.currentPassword().valid()) {
-                <span class="text-red-500 text-xs">{{ passwordForm.currentPassword().errors()[0]?.message }}</span>
-              }
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">New Password</label>
-              <input type="password" [formField]="passwordForm.newPassword"
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-              @if (passwordForm.newPassword().touched() && !passwordForm.newPassword().valid()) {
-                <span class="text-red-500 text-xs">{{ passwordForm.newPassword().errors()[0]?.message }}</span>
-              }
-            </div>
+            <chessops-input
+              id="currentPassword"
+              type="password"
+              label="Current Password"
+              placeholder="Your current password"
+              [formField]="passwordForm.currentPassword"
+            />
+
+            <chessops-input
+              id="newPassword"
+              type="password"
+              label="New Password"
+              placeholder="Minimum 8 characters"
+              [formField]="passwordForm.newPassword"
+            />
 
             @if (passwordForm().errors().length > 0) {
-              <p class="text-sm text-red-600">{{ passwordForm().errors()[0]?.message }}</p>
+              <p class="text-sm text-error">
+                {{ passwordForm().errors()[0]?.message }}
+              </p>
             }
 
-            <button type="submit" [disabled]="passwordForm().submitting()"
-              class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">
+            @if (passwordMessage()) {
+              <p [class]="passwordMessageClass()">{{ passwordMessage() }}</p>
+            }
+
+            <chessops-button
+              type="submit"
+              variant="primary"
+              size="md"
+              [disabled]="passwordForm().submitting()"
+            >
               @if (passwordForm().submitting()) {
                 <span>Updating...</span>
               } @else {
                 <span>Update Password</span>
               }
-            </button>
+            </chessops-button>
           </form>
-        </div>
+        </chessops-card>
 
         <!-- Sessions Section -->
-        <div class="bg-white shadow rounded-lg p-6">
-          <h2 class="text-lg font-medium text-gray-900 mb-4">Security</h2>
-          <button (click)="revokeAllSessions()" class="text-sm text-red-600 hover:text-red-500">
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Security"
+          [padding]="true"
+        >
+          <chessops-button
+            (onClick)="revokeAllSessions()"
+            variant="ghost"
+            size="sm"
+          >
             Sign out of all sessions
-          </button>
-        </div>
+          </chessops-button>
+        </chessops-card>
       </div>
     </div>
   `,
@@ -124,12 +187,18 @@ export class AccountPageComponent implements OnInit {
   submitPasswordChange = async (field: FieldTree<PasswordChangeModel>) => {
     try {
       await firstValueFrom(
-        this.http.post('http://localhost:3000/api/auth/change-password', {
-          currentPassword: field.currentPassword().value(),
-          newPassword: field.newPassword().value(),
-        }, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-        }),
+        this.http.post(
+          'http://localhost:3000/api/auth/change-password',
+          {
+            currentPassword: field.currentPassword().value(),
+            newPassword: field.newPassword().value(),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            },
+          },
+        ),
       );
       this.passwordMessage.set('Password updated successfully');
       this.passwordMessageClass.set('text-sm text-green-600');
@@ -145,9 +214,13 @@ export class AccountPageComponent implements OnInit {
   passwordForm = form<PasswordChangeModel>(
     this.passwordFormValue,
     (form) => {
-      required(form.currentPassword, { message: 'Current password is required' });
+      required(form.currentPassword, {
+        message: 'Current password is required',
+      });
       required(form.newPassword, { message: 'New password is required' });
-      minLength(form.newPassword, 8, { message: 'Password must be at least 8 characters' });
+      minLength(form.newPassword, 8, {
+        message: 'Password must be at least 8 characters',
+      });
     },
     {
       submission: {
@@ -161,7 +234,10 @@ export class AccountPageComponent implements OnInit {
   passwordMessage = signal('');
   passwordMessageClass = signal('text-sm');
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
     this.loadUser();
@@ -170,22 +246,26 @@ export class AccountPageComponent implements OnInit {
 
   loadUser() {
     const token = localStorage.getItem('accessToken');
-    this.http.get('http://localhost:3000/api/auth/me', {
-      headers: { Authorization: `Bearer ${token}` },
-    }).subscribe({
-      next: (response: any) => this.user.set(response),
-      error: () => this.router.navigate(['/login']),
-    });
+    this.http
+      .get('http://localhost:3000/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .subscribe({
+        next: (response: any) => this.user.set(response),
+        error: () => this.router.navigate(['/login']),
+      });
   }
 
   checkMfaStatus() {
     const token = localStorage.getItem('accessToken');
-    this.http.get('http://localhost:3000/api/mfa/status', {
-      headers: { Authorization: `Bearer ${token}` },
-    }).subscribe({
-      next: (response: any) => this.mfaEnabled.set(response.enabled),
-      error: () => this.mfaEnabled.set(false),
-    });
+    this.http
+      .get('http://localhost:3000/api/mfa/status', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .subscribe({
+        next: (response: any) => this.mfaEnabled.set(response.enabled),
+        error: () => this.mfaEnabled.set(false),
+      });
   }
 
   enableMfa() {
@@ -197,51 +277,68 @@ export class AccountPageComponent implements OnInit {
     const code = prompt('Enter your 6-digit MFA code to disable:');
     if (!code) return;
 
-    this.http.post('http://localhost:3000/api/mfa/disable', { token: code }, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).subscribe({
-      next: () => {
-        this.mfaEnabled.set(false);
-        this.passwordMessage.set('MFA disabled successfully');
-        this.passwordMessageClass.set('text-sm text-green-600');
-      },
-      error: (err) => {
-        this.passwordMessage.set(err.error?.message || 'Failed to disable MFA');
-        this.passwordMessageClass.set('text-sm text-red-600');
-      },
-    });
+    this.http
+      .post(
+        'http://localhost:3000/api/mfa/disable',
+        { token: code },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      )
+      .subscribe({
+        next: () => {
+          this.mfaEnabled.set(false);
+          this.passwordMessage.set('MFA disabled successfully');
+          this.passwordMessageClass.set('text-sm text-green-600');
+        },
+        error: (err) => {
+          this.passwordMessage.set(
+            err.error?.message || 'Failed to disable MFA',
+          );
+          this.passwordMessageClass.set('text-sm text-red-600');
+        },
+      });
   }
-
 
   revokeAllSessions() {
     if (!confirm('This will sign you out of all devices. Continue?')) return;
 
-    this.http.post('http://localhost:3000/api/auth/revoke-sessions', {}, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
-    }).subscribe({
-      next: () => {
-        localStorage.clear();
-        this.router.navigate(['/login']);
-      },
-      error: () => {
-        this.passwordMessage.set('Failed to revoke sessions');
-        this.passwordMessageClass.set('text-sm text-red-600');
-      },
-    });
+    this.http
+      .post(
+        'http://localhost:3000/api/auth/revoke-sessions',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        },
+      )
+      .subscribe({
+        next: () => {
+          localStorage.clear();
+          this.router.navigate(['/login']);
+        },
+        error: () => {
+          this.passwordMessage.set('Failed to revoke sessions');
+          this.passwordMessageClass.set('text-sm text-red-600');
+        },
+      });
   }
 
   logout() {
-    this.http.post('http://localhost:3000/api/auth/logout', {
-      refreshToken: localStorage.getItem('refreshToken'),
-    }).subscribe({
-      next: () => {
-        localStorage.clear();
-        this.router.navigate(['/login']);
-      },
-      error: () => {
-        localStorage.clear();
-        this.router.navigate(['/login']);
-      },
-    });
+    this.http
+      .post('http://localhost:3000/api/auth/logout', {
+        refreshToken: localStorage.getItem('refreshToken'),
+      })
+      .subscribe({
+        next: () => {
+          localStorage.clear();
+          this.router.navigate(['/login']);
+        },
+        error: () => {
+          localStorage.clear();
+          this.router.navigate(['/login']);
+        },
+      });
   }
 }

@@ -10,6 +10,9 @@ import {
   TreeValidationResult,
 } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
+import { InputComponent } from '@chessops/ui/input';
+import { ButtonComponent } from '@chessops/ui/button';
+import { CardComponent } from '@chessops/ui/card';
 
 interface LoginModel {
   email: string;
@@ -18,119 +21,107 @@ interface LoginModel {
 
 @Component({
   selector: 'app-login-page',
-  imports: [RouterLink, FormField, FormRoot],
+  imports: [
+    RouterLink,
+    FormField,
+    FormRoot,
+    InputComponent,
+    ButtonComponent,
+    CardComponent,
+  ],
   template: `
     <div
-      class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
+      class="min-h-screen flex items-center justify-center bg-surface py-12 px-4 sm:px-6 lg:px-8"
     >
-      <div class="max-w-md w-full space-y-8">
-        <div>
-          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to ChessOps
-          </h2>
-          <p class="mt-2 text-center text-gray-600">
+      <div class="max-w-md w-full">
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Sign in to ChessOps"
+        >
+          <p class="text-center text-sm text-muted mb-6">
             Or
             <a
               routerLink="/register"
-              class="font-medium text-indigo-600 hover:text-indigo-500"
+              class="font-medium text-primary hover:text-primary/80"
               >create a new account</a
             >
           </p>
-        </div>
-        <form class="mt-8 space-y-6" [formRoot]="loginForm">
-          <div class="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label for="email" class="sr-only">Email address</label>
-              <input
-                id="email"
-                type="email"
-                [formField]="loginForm.email"
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
-              @if (loginForm.email().touched() && !loginForm.email().valid()) {
-                <span class="text-red-500 text-xs">{{
-                  loginForm.email().errors()[0]?.message
-                }}</span>
-              }
-            </div>
-            <div>
-              <label for="password" class="sr-only">Password</label>
-              <input
-                id="password"
-                type="password"
-                [formField]="loginForm.password"
-                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-              />
-              @if (
-                loginForm.password().touched() && !loginForm.password().valid()
-              ) {
-                <span class="text-red-500 text-xs">{{
-                  loginForm.password().errors()[0]?.message
-                }}</span>
-              }
-            </div>
-          </div>
 
-          <div class="flex items-center justify-between">
-            <div class="text-sm">
-              <a
-                routerLink="/forgot-password"
-                class="font-medium text-indigo-600 hover:text-indigo-500"
-                >Forgot password?</a
-              >
-            </div>
-          </div>
+          <form class="space-y-4" [formRoot]="loginForm">
+            <chessops-input
+              id="email"
+              type="email"
+              label="Email"
+              placeholder="you@example.com"
+              [formField]="loginForm.email"
+            />
 
-          @if (loginForm().errors().length > 0) {
-            <div class="text-red-500 text-sm text-center">
-              {{ loginForm().errors()[0]?.message }}
-            </div>
-          }
+            <chessops-input
+              id="password"
+              type="password"
+              label="Password"
+              placeholder="Your password"
+              [formField]="loginForm.password"
+            />
 
-          <div>
-            <button
+            <div class="flex items-center justify-between">
+              <div class="text-sm">
+                <a
+                  routerLink="/forgot-password"
+                  class="font-medium text-primary hover:text-primary/80"
+                  >Forgot password?</a
+                >
+              </div>
+            </div>
+
+            @if (loginForm().errors().length > 0) {
+              <div class="text-error text-sm text-center">
+                {{ loginForm().errors()[0]?.message }}
+              </div>
+            }
+
+            <chessops-button
               type="submit"
+              variant="primary"
+              size="md"
               [disabled]="loginForm().submitting()"
-              class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              [fullWidth]="true"
             >
               @if (loginForm().submitting()) {
                 <span>Signing in...</span>
               } @else {
                 <span>Sign in</span>
               }
-            </button>
-          </div>
+            </chessops-button>
+          </form>
 
           <div class="mt-6">
             <div class="relative">
               <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
+                <div class="w-full border-t border-border"></div>
               </div>
               <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-gray-50 text-gray-500"
-                  >Or continue with</span
-                >
+                <span class="px-2 bg-surface text-muted">Or continue with</span>
               </div>
             </div>
 
             <div class="mt-6 grid grid-cols-2 gap-3">
               <a
                 href="http://localhost:3000/api/auth/google"
-                class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                class="inline-flex justify-center py-2 px-4 border border-border rounded-md shadow-sm bg-surface text-sm font-medium text-foreground hover:bg-surface-elevated"
               >
                 Google
               </a>
               <a
                 href="http://localhost:3000/api/auth/github"
-                class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                class="inline-flex justify-center py-2 px-4 border border-border rounded-md shadow-sm bg-surface text-sm font-medium text-foreground hover:bg-surface-elevated"
               >
                 GitHub
               </a>
             </div>
           </div>
-        </form>
+        </chessops-card>
       </div>
     </div>
   `,

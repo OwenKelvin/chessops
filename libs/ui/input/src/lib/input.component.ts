@@ -4,11 +4,13 @@ import {
   model,
   computed,
   ElementRef,
-  viewChild,
+  viewChild, InputSignal, InputSignalWithTransform,
 } from '@angular/core';
-import { FormValueControl } from '@angular/forms/signals';
+import { FormValueControl, ValidationError } from '@angular/forms/signals';
 import { inputVariants, type InputVariants } from './input.variants';
 import { twMerge } from 'tailwind-merge';
+
+export { inputVariants };
 
 export type InputType =
   | 'text'
@@ -49,11 +51,11 @@ export type InputSize = InputVariants['size'];
         (blur)="handleBlur()"
       />
 
-      @if (error()) {
+      @if (errors().length > 0) {
         <span
           class="text-xs font-medium text-error animate-in fade-in slide-in-from-top-1"
         >
-          {{ error() }}
+          {{ errors()[0].message }}
         </span>
       }
     </div>
@@ -83,7 +85,7 @@ export class InputComponent implements FormValueControl<string | null> {
   readonly step = input<number>();
   readonly pattern = input<readonly RegExp[]>([]);
   readonly size = input<InputSize>('md');
-  readonly error = input<string | null>(null);
+  readonly errors = model<readonly ValidationError.WithOptionalFieldTree[]>([]);
 
   // --- View Handling ---
   private readonly inputRef =
@@ -92,7 +94,7 @@ export class InputComponent implements FormValueControl<string | null> {
   readonly inputClass = computed(() => {
     return twMerge(
       inputVariants({
-        variant: this.error() ? 'error' : 'default',
+        variant: this.errors().length > 0 ? 'error' : 'default',
         size: this.size(),
       }),
     );

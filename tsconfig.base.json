@@ -16,10 +16,10 @@
     "baseUrl": ".",
     "paths": {
       "@chessops/ui": ["libs/ui/src/index.ts"],
-      "@chessops/ui/input": ["libs/ui/input/index.ts"],
-      "@chessops/ui/table": ["libs/ui/table/index.ts"],
-      "@chessops/ui/button": ["libs/ui/button/index.ts"],
-      "@chessops/ui/card": ["libs/ui/card/index.ts"]
+      "@chessops/ui/input": ["libs/ui/input/src/index.ts"],
+      "@chessops/ui/table": ["libs/ui/table/src/index.ts"],
+      "@chessops/ui/button": ["libs/ui/button/src/index.ts"],
+      "@chessops/ui/card": ["libs/ui/card/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

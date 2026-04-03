@@ -14,12 +14,11 @@ export { buttonVariants };
       [type]="type"
       [disabled]="disabled"
       [class]="buttonClass"
-      (click)="clicked.emit($event)"
+      (click)="handleClick($event)"
     >
       <ng-content></ng-content>
     </button>
   `,
-  standalone: false,
 })
 export class ButtonComponent {
   @Input() variant: ButtonVariant = 'primary';
@@ -28,6 +27,7 @@ export class ButtonComponent {
   @Input() disabled = false;
   @Input() fullWidth = false;
   @Output() clicked = new EventEmitter<MouseEvent>();
+  @Output() onClick = new EventEmitter<MouseEvent>();
 
   get buttonClass(): string {
     return twMerge(
@@ -37,5 +37,10 @@ export class ButtonComponent {
         fullWidth: this.fullWidth,
       })
     );
+  }
+
+  handleClick(event: MouseEvent): void {
+    this.clicked.emit(event);
+    this.onClick.emit(event);
   }
 }
