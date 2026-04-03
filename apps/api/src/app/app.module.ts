@@ -11,6 +11,7 @@ import { ApiKeyModule } from '../api-key/api-key.module';
 import { AppRegistrationModule } from '../app-registration/app-registration.module';
 import { WebhookModule } from '../webhook/webhook.module';
 import { TournamentModule } from '../tournament/tournament.module';
+import { PlayerModule } from '../player/player.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { TournamentModule } from '../tournament/tournament.module';
     AppRegistrationModule,
     WebhookModule,
     TournamentModule,
+    PlayerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
