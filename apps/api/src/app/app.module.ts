@@ -13,6 +13,7 @@ import { WebhookModule } from '../webhook/webhook.module';
 import { TournamentModule } from '../tournament/tournament.module';
 import { PlayerModule } from '../player/player.module';
 import { PairingModule } from '../pairing/pairing.module';
+import { TiebreakModule } from '../tiebreak/tiebreak.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PairingModule } from '../pairing/pairing.module';
     TournamentModule,
     PlayerModule,
     PairingModule,
+    TiebreakModule,
   ],
   controllers: [AppController],
   providers: [AppService],
