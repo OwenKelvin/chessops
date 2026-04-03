@@ -2,7 +2,10 @@
   "name": "@chessops/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "serve:api": "pnpm nx serve api",
+    "serve:portal": "pnpm nx serve portal --port=8050"
+  },
   "private": true,
   "dependencies": {
     "@angular/common": "~21.2.0",
