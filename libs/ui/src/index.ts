@@ -1,5 +1,8 @@
+// Primary entry point - exports all components and modules
 export * from './lib/ui.module';
-export * from './lib/components/button/button.component';
-export * from './lib/components/input/input.component';
-export * from './lib/components/card/card.component';
-export * from './lib/components/table/table.component';
+
+// Components
+export { ButtonComponent, buttonVariants, type ButtonVariant, type ButtonSize } from './lib/components/button/button.component';
+export { InputComponent, inputVariants, type InputType, type InputSize } from './lib/components/input/input.component';
+export { CardComponent, cardVariants, type CardVariants } from './lib/components/card/card.component';
+export { TableComponent, tableVariants, tableHeaderVariants, tableCellVariants, type TableVariants, type ColumnDef } from './lib/components/table/table.component';

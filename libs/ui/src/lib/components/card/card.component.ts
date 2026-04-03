@@ -1,6 +1,8 @@
-import { Component, Input, HostBinding } from '@angular/core';
+import { Component, Input } from '@angular/core';
+import { cardVariants, type CardVariants } from './card.variants';
+import { twMerge } from 'tailwind-merge';
 
-export type CardVariant = 'default' | 'elevated' | 'outlined';
+export { cardVariants, type CardVariants };
 
 @Component({
   selector: 'chessops-card',
@@ -21,17 +23,13 @@ export type CardVariant = 'default' | 'elevated' | 'outlined';
   standalone: false,
 })
 export class CardComponent {
-  @Input() variant: CardVariant = 'default';
+  @Input() variant: CardVariants['variant'] = 'default';
   @Input() title?: string;
   @Input() header = false;
   @Input() footer = false;
   @Input() padding = true;
 
-  @HostBinding('class') get class() {
-    return `chessops-card chessops-card--${this.variant} ${this.padding ? 'chessops-card--padded' : ''}`;
-  }
-
   get cardClass(): string {
-    return `chessops-card__inner`;
+    return twMerge(cardVariants({ variant: this.variant, padding: this.padding }));
   }
 }

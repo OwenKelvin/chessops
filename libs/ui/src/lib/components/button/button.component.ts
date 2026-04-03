@@ -1,7 +1,11 @@
-import { Component, Input, Output, EventEmitter, HostBinding } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { buttonVariants, type ButtonVariants } from './button.variants';
+import { twMerge } from 'tailwind-merge';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonVariant = ButtonVariants['variant'];
+export type ButtonSize = ButtonVariants['size'];
+
+export { buttonVariants };
 
 @Component({
   selector: 'chessops-button',
@@ -25,12 +29,13 @@ export class ButtonComponent {
   @Input() fullWidth = false;
   @Output() clicked = new EventEmitter<MouseEvent>();
 
-  @HostBinding('class') get class() {
-    return this.buttonClass;
-  }
-
   get buttonClass(): string {
-    const base = 'chessops-button';
-    return `${base} ${base}--${this.variant} ${base}--${this.size} ${this.fullWidth ? `${base}--full` : ''}`;
+    return twMerge(
+      buttonVariants({
+        variant: this.variant,
+        size: this.size,
+        fullWidth: this.fullWidth,
+      })
+    );
   }
 }

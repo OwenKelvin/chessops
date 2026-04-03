@@ -1,13 +1,17 @@
-import { Component, Input, Output, EventEmitter, HostBinding } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { inputVariants, type InputVariants } from './input.variants';
+import { twMerge } from 'tailwind-merge';
+
+export { inputVariants };
 
 export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date';
-export type InputSize = 'sm' | 'md' | 'lg';
+export type InputSize = InputVariants['size'];
 
 @Component({
   selector: 'chessops-input',
   template: `
-    <div [class]="wrapperClass">
+    <div class="chessops-input-wrapper">
       <label *ngIf="label" [for]="id" class="chessops-input__label">{{ label }}</label>
       <input
         [id]="id"
@@ -59,16 +63,9 @@ export class InputComponent implements ControlValueAccessor {
   onChange: (value: any) => void = () => {};
   onTouched: () => void = () => {};
 
-  @HostBinding('class') get class() {
-    return 'chessops-input-wrapper';
-  }
-
-  get wrapperClass(): string {
-    return `chessops-input__wrapper chessops-input__wrapper--${this.size}`;
-  }
-
   get inputClass(): string {
-    return `chessops-input chessops-input--${this.type} ${this.error ? 'chessops-input--error' : ''}`;
+    const variant = this.error ? 'error' : 'default';
+    return twMerge(inputVariants({ variant, size: this.size }));
   }
 
   writeValue(value: any): void {

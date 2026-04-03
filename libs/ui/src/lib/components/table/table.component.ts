@@ -1,4 +1,8 @@
-import { Component, Input, Output, EventEmitter, HostBinding } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { tableVariants, tableHeaderVariants, tableCellVariants, type TableVariants } from './table.variants';
+import { twMerge } from 'tailwind-merge';
+
+export { tableVariants, tableHeaderVariants, tableCellVariants, type TableVariants };
 
 export interface ColumnDef<T> {
   key: keyof T | string;
@@ -14,7 +18,7 @@ export type SortableKey = string;
 @Component({
   selector: 'chessops-table',
   template: `
-    <div [class]="tableClass">
+    <div [class]="tableWrapperClass">
       <table class="chessops-table__table">
         <thead class="chessops-table__head">
           <tr class="chessops-table__row">
@@ -23,7 +27,6 @@ export type SortableKey = string;
               [class]="getHeaderClass(col)"
               [style.width]="col.width"
               (click)="col.sortable ? onSort(col) : null"
-              [class.chessops-table__header--sortable]="col.sortable"
             >
               {{ col.label }}
               <span *ngIf="col.sortable" class="chessops-table__sort-icon">
@@ -75,16 +78,17 @@ export class TableComponent<T> {
   @Output() sort = new EventEmitter<string>();
   @Output() rowClick = new EventEmitter<T>();
 
-  @HostBinding('class') get class() {
-    return 'chessops-table';
-  }
-
-  get tableClass(): string {
-    return `chessops-table__wrapper ${this.compact ? 'chessops-table--compact' : ''}`;
+  get tableWrapperClass(): string {
+    return twMerge('chessops-table__wrapper overflow-x-auto', tableVariants({ compact: this.compact }));
   }
 
   getHeaderClass(col: ColumnDef<T>): string {
-    return `chessops-table__header chessops-table__header--${col.align || 'left'}`;
+    return twMerge(
+      tableHeaderVariants({
+        align: col.align,
+        sortable: col.sortable,
+      })
+    );
   }
 
   getRowClass(index: number): string {
@@ -95,9 +99,11 @@ export class TableComponent<T> {
   }
 
   getCellClass(col: ColumnDef<T>, row: T): string {
-    const classes = ['chessops-table__cell', `chessops-table__cell--${col.align || 'left'}`];
-    if (col.cellClass) classes.push(col.cellClass(row));
-    return classes.join(' ');
+    const baseClass = twMerge(
+      tableCellVariants({ align: col.align })
+    );
+    const customClass = col.cellClass ? col.cellClass(row) : '';
+    return customClass ? `${baseClass} ${customClass}` : baseClass;
   }
 
   getCellContent(col: ColumnDef<T>, row: any): any {
