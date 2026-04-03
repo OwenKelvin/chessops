@@ -1,68 +1,114 @@
-import { Component, Input } from '@angular/core';
-import { FormControl } from '@angular/forms/signals';
+import {
+  Component,
+  input,
+  model,
+  computed,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
+import { FormValueControl } from '@angular/forms/signals';
 import { inputVariants, type InputVariants } from './input.variants';
 import { twMerge } from 'tailwind-merge';
 
-export { inputVariants };
-
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search' | 'date';
+export type InputType =
+  | 'text'
+  | 'email'
+  | 'password'
+  | 'number'
+  | 'tel'
+  | 'url'
+  | 'search'
+  | 'date';
 export type InputSize = InputVariants['size'];
 
 @Component({
   selector: 'chessops-input',
+  standalone: true,
   template: `
-    <div class="chessops-input-wrapper">
-      <label *ngIf="label" [for]="id" class="chessops-input__label">{{ label }}</label>
+    <div class="flex flex-col gap-1.5 w-full">
+      @if (label()) {
+        <label [for]="id()" class="text-sm font-bold text-primary font-display">
+          {{ label() }}
+        </label>
+      }
+
       <input
-        [id]="id"
-        [type]="type"
-        [placeholder]="placeholder"
-        [disabled]="disabled"
-        [required]="required"
-        [attr.minlength]="minlength"
-        [attr.maxlength]="maxlength"
-        [min]="min"
-        [max]="max"
-        [step]="step"
-        [pattern]="pattern"
-        [class]="inputClass"
-        [formControl]="formControl"
-        (input)="onInput($event)"
-        (blur)="onBlur()"
+        #inputElement
+        [id]="id()"
+        [type]="type()"
+        [placeholder]="placeholder()"
+        [disabled]="disabled()"
+        [required]="required()"
+        [attr.minlength]="minLength()"
+        [attr.maxlength]="maxLength()"
+        [min]="min()"
+        [max]="max()"
+        [class]="inputClass()"
+        [value]="value() ?? ''"
+        (input)="handleInput($event)"
+        (blur)="handleBlur()"
       />
-      <span *ngIf="error" class="chessops-input__error">{{ error }}</span>
+
+      @if (error()) {
+        <span
+          class="text-xs font-medium text-error animate-in fade-in slide-in-from-top-1"
+        >
+          {{ error() }}
+        </span>
+      }
     </div>
   `,
-  standalone: false,
 })
-export class InputComponent {
-  @Input() id = `chessops-input-${Math.random().toString(36).substr(2, 9)}`;
-  @Input() label?: string;
-  @Input() type: InputType = 'text';
-  @Input() placeholder = '';
-  @Input() disabled = false;
-  @Input() required = false;
-  @Input() minlength?: number;
-  @Input() maxlength?: number;
-  @Input() min?: number | string;
-  @Input() max?: number | string;
-  @Input() step?: number;
-  @Input() pattern?: string;
-  @Input() error?: string;
-  @Input() size: InputSize = 'md';
-  @Input() formControl!: FormControl<string | null>;
+export class InputComponent implements FormValueControl<string | null> {
+  // --- FormValueControl Implementation ---
+  // The 'value' is now a model signal that handles 2-way syncing automatically
+  readonly value = model<string | null>(null);
 
-  get inputClass(): string {
-    const variant = this.error ? 'error' : 'default';
-    return twMerge(inputVariants({ variant, size: this.size }));
+  // Signal Forms automatically binds these if defined as inputs/models
+  readonly disabled = input<boolean>(false);
+  readonly touched = model<boolean>(false);
+  readonly required = input<boolean>(false);
+  readonly min = input<number | undefined>(undefined);
+  readonly max = input<number | undefined>(undefined);
+  readonly minLength = input<number | undefined>(undefined);
+  readonly maxLength = input<number | undefined>(undefined);
+
+  // --- UI Props ---
+  readonly id = input<string>(
+    `chessops-input-${Math.random().toString(36).substring(2, 9)}`,
+  );
+  readonly label = input<string>();
+  readonly type = input<InputType>('text');
+  readonly placeholder = input<string>('');
+  readonly step = input<number>();
+  readonly pattern = input<readonly RegExp[]>([]);
+  readonly size = input<InputSize>('md');
+  readonly error = input<string | null>(null);
+
+  // --- View Handling ---
+  private readonly inputRef =
+    viewChild<ElementRef<HTMLInputElement>>('inputElement');
+
+  readonly inputClass = computed(() => {
+    return twMerge(
+      inputVariants({
+        variant: this.error() ? 'error' : 'default',
+        size: this.size(),
+      }),
+    );
+  });
+
+  handleInput(event: Event): void {
+    const el = event.target as HTMLInputElement;
+    this.value.set(el.value);
   }
 
-  onInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.formControl.set(value);
+  handleBlur(): void {
+    this.touched.set(true);
   }
 
-  onBlur(): void {
-    this.formControl.markAsTouched();
+  // Implementation of FormValueControl focus method
+  focus(options?: FocusOptions): void {
+    this.inputRef()?.nativeElement.focus(options);
   }
 }
