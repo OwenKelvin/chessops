@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsDateString, IsInt, IsBoolean, Min, IsIn } from 
 
 export class CreateTournamentDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -13,7 +13,7 @@ export class CreateTournamentDto {
   location?: string;
 
   @IsDateString()
-  startDate: string;
+  startDate!: string;
 
   @IsOptional()
   @IsDateString()

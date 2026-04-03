@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { WebhookService, WebhookEvents } from '../webhook/webhook.service';
+import { WebhookService } from '../webhook/webhook.service';
+import { WebhookEvents } from '../webhook/webhook.events';
 
 @Injectable()
 export class TournamentService {
@@ -391,18 +392,18 @@ export class TournamentService {
       },
     });
 
-    const standings = players.map((p) => ({
+    const standings = players.map((p: any) => ({
       playerId: p.playerId,
       name: `${p.player.firstName} ${p.player.lastName}`,
       seed: p.seed,
       rating: p.rating,
-      points: p.results.reduce((sum, r) => sum + parseFloat(r.result), 0),
+      points: p.results.reduce((sum: number, r: any) => sum + parseFloat(r.result), 0),
       games: p.results.length,
       status: p.status,
     }));
 
     // Sort by points (desc), then by seed (asc)
-    standings.sort((a, b) => {
+    standings.sort((a: any, b: any) => {
       if (b.points !== a.points) return b.points - a.points;
       return a.seed - b.seed;
     });
