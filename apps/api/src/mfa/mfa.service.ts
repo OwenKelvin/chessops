@@ -128,6 +128,20 @@ export class MfaService {
     return mfaSecret?.enabled ?? false;
   }
 
+  async checkMfaRequired(userId: string): Promise<{ required: boolean; challengeId?: string }> {
+    const mfaSecret = await this.prisma.mfaSecret.findUnique({
+      where: { userId },
+    });
+
+    if (!mfaSecret?.enabled) {
+      return { required: false };
+    }
+
+    // Create a temporary challenge token
+    const challengeId = `${userId}:${Date.now()}`;
+    return { required: true, challengeId };
+  }
+
   private generateBackupCodes(): string[] {
     const codes: string[] = [];
     for (let i = 0; i < 10; i++) {

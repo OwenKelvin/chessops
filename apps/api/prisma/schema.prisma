@@ -16,6 +16,8 @@ model User {
   displayName     String?
   avatarUrl       String?
   emailVerifiedAt DateTime?
+  isSuspended     Boolean         @default(false)
+  role            String          @default("user")
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -23,6 +25,7 @@ model User {
   oauthAccounts   OauthAccount[]
   mfaSecret       MfaSecret?
   recoveryTokens  AccountRecovery[]
+  emailVerification EmailVerification?
 
   @@index([email])
 }
@@ -73,6 +76,20 @@ model MfaSecret {
 model AccountRecovery {
   id        String   @id @default(cuid())
   userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
   token     String   @unique
   expiresAt DateTime
   used      Boolean  @default(false)

@@ -27,10 +27,21 @@ class VerifyBackupCodeDto {
   code: string;
 }
 
+class ChallengeMfaDto {
+  token: string;
+  userId?: string;
+}
+
 @Controller('mfa')
 @UseGuards(JwtAuthGuard)
 export class MfaController {
   constructor(private mfaService: MfaService) {}
+
+  private async generateAccessToken(userId: string): Promise<string> {
+    const { JwtService } = await import('@nestjs/jwt');
+    const jwtService = new JwtService();
+    return jwtService.signAsync({ sub: userId }, { expiresIn: '15m' });
+  }
 
   @Get('setup')
   async setup(@Req() req: any) {
@@ -69,5 +80,27 @@ export class MfaController {
   async status(@Req() req: any) {
     const enabled = await this.mfaService.isMfaEnabled(req.user.userId);
     return { enabled };
+  }
+
+  @Post('challenge')
+  @HttpCode(HttpStatus.OK)
+  async challenge(@Req() req: any, @Body() dto: ChallengeMfaDto) {
+    // Check if MFA is required for this user
+    const { required } = await this.mfaService.checkMfaRequired(req.user.userId);
+
+    if (!required) {
+      return { success: true, message: 'MFA not required' };
+    }
+
+    const isValid = await this.mfaService.verifyMfaToken(req.user.userId, dto.token);
+
+    if (!isValid) {
+      return { success: false, message: 'Invalid MFA code' };
+    }
+
+    // Generate new access token after MFA verification
+    const accessToken = await this.generateAccessToken(req.user.userId);
+
+    return { success: true, accessToken };
   }
 }

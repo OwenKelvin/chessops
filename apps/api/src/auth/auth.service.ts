@@ -3,12 +3,15 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { randomBytes } from 'crypto';
 
 interface OAuthProfile {
   provider: string;
@@ -25,6 +28,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -70,6 +74,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.isSuspended) {
+      throw new UnauthorizedException('Account suspended');
+    }
+
     const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
 
     if (!passwordMatches) {
@@ -86,6 +94,7 @@ export class AuthService {
         email: user.email,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        role: user.role,
       },
       ...tokens,
     };
@@ -97,20 +106,21 @@ export class AuthService {
     });
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
+  async refreshTokens(refreshToken: string) {
     const session = await this.prisma.session.findUnique({
       where: { token: refreshToken },
     });
 
-    if (!session || session.userId !== userId) {
+    if (!session) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
     if (new Date() > session.expiresAt) {
+      await this.prisma.session.delete({ where: { id: session.id } });
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const tokens = await this.generateTokens(userId);
+    const tokens = await this.generateTokens(session.userId);
 
     await this.prisma.session.update({
       where: { id: session.id },
@@ -308,5 +318,119 @@ export class AuthService {
 
     // Revoke all sessions
     await this.revokeAllSessions(userId);
+  }
+
+  async updateProfile(userId: string, dto: { displayName?: string; avatarUrl?: string }) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        displayName: dto.displayName,
+        avatarUrl: dto.avatarUrl,
+      },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        avatarUrl: true,
+      },
+    });
+  }
+
+  async deleteAccount(userId: string) {
+    // Delete all sessions first
+    await this.prisma.session.deleteMany({
+      where: { userId },
+    });
+
+    // Delete OAuth accounts
+    await this.prisma.oauthAccount.deleteMany({
+      where: { userId },
+    });
+
+    // Delete MFA secrets
+    await this.prisma.mfaSecret.deleteMany({
+      where: { userId },
+    });
+
+    // Delete account recovery tokens
+    await this.prisma.accountRecovery.deleteMany({
+      where: { userId },
+    });
+
+    // Finally delete the user
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+  }
+
+  async requestEmailVerification(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.emailVerifiedAt) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    // Delete existing verification token if any
+    await this.prisma.emailVerification.deleteMany({
+      where: { userId: user.id },
+    });
+
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await this.prisma.emailVerification.create({
+      data: {
+        userId: user.id,
+        token,
+        expiresAt,
+      },
+    });
+
+    // Send verification email
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/verify-email?token=${token}`;
+    await this.mailService.sendMail(
+      email,
+      'Verify your email - ChessOps',
+      `<p>Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
+    );
+
+    return { success: true };
+  }
+
+  async verifyEmail(token: string) {
+    const verification = await this.prisma.emailVerification.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!verification) {
+      throw new BadRequestException('Invalid verification token');
+    }
+
+    if (verification.used) {
+      throw new BadRequestException('Token already used');
+    }
+
+    if (new Date() > verification.expiresAt) {
+      throw new BadRequestException('Verification token expired');
+    }
+
+    await this.prisma.user.update({
+      where: { id: verification.userId },
+      data: { emailVerifiedAt: new Date() },
+    });
+
+    await this.prisma.emailVerification.update({
+      where: { id: verification.id },
+      data: { used: true },
+    });
+
+    return { success: true };
   }
 }
