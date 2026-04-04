@@ -655,4 +655,639 @@ const user = await res.json();`,
       },
     ],
   },
+  {
+    id: 'players',
+    title: 'Players',
+    routes: [
+      {
+        id: 'post-players',
+        method: 'POST',
+        path: '/players',
+        description: 'Create a new player profile.',
+        auth: 'JWT',
+        requestBody: [
+          { name: 'firstName', type: 'string', required: true, description: 'Player first name' },
+          { name: 'lastName', type: 'string', required: true, description: 'Player last name' },
+          { name: 'email', type: 'string', required: false, description: 'Player email' },
+          { name: 'fideId', type: 'string', required: false, description: 'FIDE ID' },
+          { name: 'rating', type: 'number', required: false, description: 'Player rating' },
+        ],
+        responses: {
+          200: {
+            description: 'Player created',
+            example: { id: 'player1', firstName: 'John', lastName: 'Doe', rating: 1500 },
+          },
+          400: { description: 'Invalid input', example: { statusCode: 400, message: ['firstName must be a string'] } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/players \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"firstName":"John","lastName":"Doe","rating":1500}'`,
+        },
+      },
+      {
+        id: 'get-players',
+        method: 'GET',
+        path: '/players',
+        description: 'List all players for the authenticated user.',
+        auth: 'JWT',
+        responses: {
+          200: {
+            description: 'List of players',
+            example: {
+              players: [
+                { id: 'player1', firstName: 'John', lastName: 'Doe', rating: 1500 },
+                { id: 'player2', firstName: 'Jane', lastName: 'Smith', rating: 1800 },
+              ],
+            },
+          },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/players \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'get-player-by-id',
+        method: 'GET',
+        path: '/players/:id',
+        description: 'Get a specific player by ID.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Player ID' },
+        ],
+        responses: {
+          200: {
+            description: 'Player details',
+            example: { id: 'player1', firstName: 'John', lastName: 'Doe', rating: 1500, email: 'john@example.com' },
+          },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Player not found', example: { statusCode: 404, message: 'Player not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/players/player123 \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'patch-players',
+        method: 'PATCH',
+        path: '/players/:id',
+        description: 'Update a player profile.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Player ID' },
+        ],
+        requestBody: [
+          { name: 'firstName', type: 'string', required: false, description: 'Player first name' },
+          { name: 'lastName', type: 'string', required: false, description: 'Player last name' },
+          { name: 'email', type: 'string', required: false, description: 'Player email' },
+          { name: 'rating', type: 'number', required: false, description: 'Player rating' },
+        ],
+        responses: {
+          200: {
+            description: 'Player updated',
+            example: { id: 'player1', firstName: 'John', lastName: 'Doe', rating: 1600 },
+          },
+          400: { description: 'Invalid input', example: { statusCode: 400, message: ['rating must be a number'] } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Player not found', example: { statusCode: 404, message: 'Player not found' } },
+        },
+        examples: {
+          curl: `curl -X PATCH http://localhost:8082/players/player123 \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"rating":1600}'`,
+        },
+      },
+      {
+        id: 'delete-players',
+        method: 'DELETE',
+        path: '/players/:id',
+        description: 'Delete a player profile.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Player ID' },
+        ],
+        responses: {
+          200: { description: 'Player deleted', example: { success: true } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Player not found', example: { statusCode: 404, message: 'Player not found' } },
+        },
+        examples: {
+          curl: `curl -X DELETE http://localhost:8082/players/player123 \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'get-player-statistics',
+        method: 'GET',
+        path: '/players/:id/statistics',
+        description: 'Get player tournament statistics.',
+        auth: 'public',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Player ID' },
+        ],
+        responses: {
+          200: {
+            description: 'Player statistics',
+            example: {
+              playerId: 'player1',
+              gamesPlayed: 25,
+              wins: 15,
+              losses: 7,
+              draws: 3,
+              winRate: 0.6,
+              ratingChange: 150,
+            },
+          },
+          404: { description: 'Player not found', example: { statusCode: 404, message: 'Player not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/players/player123/statistics`,
+        },
+      },
+    ],
+  },
+  {
+    id: 'tournaments',
+    title: 'Tournaments',
+    routes: [
+      {
+        id: 'post-tournaments',
+        method: 'POST',
+        path: '/tournaments',
+        description: 'Create a new tournament.',
+        auth: 'JWT',
+        requestBody: [
+          { name: 'name', type: 'string', required: true, description: 'Tournament name' },
+          { name: 'description', type: 'string', required: false, description: 'Tournament description' },
+          { name: 'startDate', type: 'string', required: true, description: 'Start date (ISO 8601)' },
+          { name: 'endDate', type: 'string', required: false, description: 'End date (ISO 8601)' },
+          { name: 'format', type: 'string', required: false, description: 'Format: swiss, roundrobin, elimination' },
+          { name: 'maxRounds', type: 'number', required: false, description: 'Maximum rounds (for Swiss)' },
+          { name: 'maxPlayers', type: 'number', required: false, description: 'Maximum players' },
+          { name: 'registrationOpen', type: 'boolean', required: false, description: 'Is registration open' },
+        ],
+        responses: {
+          200: {
+            description: 'Tournament created',
+            example: { id: 'trn1', name: 'Spring Championship', format: 'swiss', status: 'draft' },
+          },
+          400: { description: 'Invalid input', example: { statusCode: 400, message: ['name must be a string'] } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"name":"Spring Championship","startDate":"2024-05-01T10:00:00Z","format":"swiss","maxRounds":9}'`,
+        },
+      },
+      {
+        id: 'get-tournaments',
+        method: 'GET',
+        path: '/tournaments',
+        description: 'List all tournaments.',
+        auth: 'JWT',
+        responses: {
+          200: {
+            description: 'List of tournaments',
+            example: {
+              tournaments: [
+                { id: 'trn1', name: 'Spring Championship', format: 'swiss', status: 'active' },
+                { id: 'trn2', name: 'Summer Open', format: 'roundrobin', status: 'registration' },
+              ],
+            },
+          },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'get-tournament-by-id',
+        method: 'GET',
+        path: '/tournaments/:id',
+        description: 'Get a specific tournament by ID.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+        ],
+        responses: {
+          200: {
+            description: 'Tournament details',
+            example: {
+              id: 'trn1',
+              name: 'Spring Championship',
+              format: 'swiss',
+              status: 'active',
+              startDate: '2024-05-01T10:00:00Z',
+              maxRounds: 9,
+            },
+          },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments/trn123 \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'patch-tournaments',
+        method: 'PATCH',
+        path: '/tournaments/:id',
+        description: 'Update a tournament.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+        ],
+        requestBody: [
+          { name: 'name', type: 'string', required: false, description: 'Tournament name' },
+          { name: 'description', type: 'string', required: false, description: 'Tournament description' },
+          { name: 'startDate', type: 'string', required: false, description: 'Start date' },
+          { name: 'status', type: 'string', required: false, description: 'Status: draft, registration, active, completed' },
+          { name: 'registrationOpen', type: 'boolean', required: false, description: 'Is registration open' },
+        ],
+        responses: {
+          200: {
+            description: 'Tournament updated',
+            example: { id: 'trn1', name: 'Spring Championship', status: 'active' },
+          },
+          400: { description: 'Invalid input', example: { statusCode: 400, message: ['Invalid status'] } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X PATCH http://localhost:8082/tournaments/trn123 \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"status":"active","registrationOpen":false}'`,
+        },
+      },
+      {
+        id: 'delete-tournaments',
+        method: 'DELETE',
+        path: '/tournaments/:id',
+        description: 'Delete a tournament.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+        ],
+        responses: {
+          200: { description: 'Tournament deleted', example: { success: true } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X DELETE http://localhost:8082/tournaments/trn123 \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'post-tournament-players',
+        method: 'POST',
+        path: '/tournaments/:id/players',
+        description: 'Add a player to a tournament.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+        ],
+        requestBody: [
+          { name: 'playerId', type: 'string', required: true, description: 'Player ID to add' },
+          { name: 'seed', type: 'number', required: false, description: 'Player seed' },
+        ],
+        responses: {
+          200: {
+            description: 'Player added',
+            example: { id: 'tp1', playerId: 'player1', tournamentId: 'trn1', seed: 1 },
+          },
+          400: { description: 'Registration closed', example: { statusCode: 400, message: 'Registration is closed' } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Tournament or player not found', example: { statusCode: 404, message: 'Not found' } },
+          409: { description: 'Player already registered', example: { statusCode: 409, message: 'Player already registered' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments/trn123/players \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"playerId":"player1","seed":1}'`,
+        },
+      },
+      {
+        id: 'delete-tournament-players',
+        method: 'DELETE',
+        path: '/tournaments/:id/players/:playerId',
+        description: 'Remove a player from a tournament.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+          { name: 'playerId', type: 'string', description: 'Player ID' },
+        ],
+        responses: {
+          200: { description: 'Player removed', example: { success: true } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Not found', example: { statusCode: 404, message: 'Not found' } },
+        },
+        examples: {
+          curl: `curl -X DELETE http://localhost:8082/tournaments/trn123/players/player1 \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'post-tournament-rounds',
+        method: 'POST',
+        path: '/tournaments/:id/rounds',
+        description: 'Create a new round in the tournament.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+        ],
+        requestBody: [
+          { name: 'roundNumber', type: 'number', required: true, description: 'Round number' },
+        ],
+        responses: {
+          200: {
+            description: 'Round created',
+            example: { id: 'round1', tournamentId: 'trn1', roundNumber: 1, status: 'pending' },
+          },
+          400: { description: 'Invalid round number', example: { statusCode: 400, message: 'Invalid round number' } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments/trn123/rounds \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"roundNumber":1}'`,
+        },
+      },
+      {
+        id: 'post-tournament-results',
+        method: 'POST',
+        path: '/tournaments/:id/results',
+        description: 'Submit a game result.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'id', type: 'string', description: 'Tournament ID' },
+        ],
+        requestBody: [
+          { name: 'pairingId', type: 'string', required: true, description: 'Pairing ID' },
+          { name: 'result', type: 'string', required: true, description: 'Result: 1-0, 0-1, 1/2-1/2' },
+        ],
+        responses: {
+          200: {
+            description: 'Result submitted',
+            example: { id: 'result1', pairingId: 'pair1', result: '1-0' },
+          },
+          400: { description: 'Invalid result', example: { statusCode: 400, message: 'Invalid result format' } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Pairing not found', example: { statusCode: 404, message: 'Pairing not found' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments/trn123/results \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"pairingId":"pair1","result":"1-0"}'`,
+        },
+      },
+    ],
+  },
+  {
+    id: 'standings',
+    title: 'Standings & Tiebreaks',
+    routes: [
+      {
+        id: 'get-standings',
+        method: 'GET',
+        path: '/tournaments/:tournamentId/standings',
+        description: 'Get tournament standings with tiebreak calculations.',
+        auth: 'public',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+        ],
+        responses: {
+          200: {
+            description: 'Tournament standings',
+            example: {
+              standings: [
+                { rank: 1, playerId: 'player1', name: 'John Doe', score: 7.5, tiebreaks: { buchholz: 45.5, sonneborn: 28.5 } },
+                { rank: 2, playerId: 'player2', name: 'Jane Smith', score: 6.5, tiebreaks: { buchholz: 43.0, sonneborn: 25.0 } },
+              ],
+            },
+          },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments/trn123/standings`,
+        },
+      },
+      {
+        id: 'get-standings-details',
+        method: 'GET',
+        path: '/tournaments/:tournamentId/standings/:playerId/details',
+        description: 'Get detailed tiebreak information for a specific player.',
+        auth: 'public',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+          { name: 'playerId', type: 'string', description: 'Player ID' },
+        ],
+        responses: {
+          200: {
+            description: 'Player tiebreak details',
+            example: {
+              playerId: 'player1',
+              name: 'John Doe',
+              score: 7.5,
+              tiebreaks: {
+                buchholz: 45.5,
+                sonnebornBerger: 28.5,
+                directEncounter: 1,
+                gamesWon: 6,
+              },
+              roundScores: [1, 1, 0.5, 1, 0, 1, 1],
+            },
+          },
+          404: { description: 'Not found', example: { statusCode: 404, message: 'Not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments/trn123/standings/player1/details`,
+        },
+      },
+      {
+        id: 'get-standings-by-tiebreak',
+        method: 'GET',
+        path: '/tournaments/:tournamentId/standings/by/:tiebreak',
+        description: 'Get standings sorted by a specific tiebreak method.',
+        auth: 'public',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+          { name: 'tiebreak', type: 'string', description: 'Tiebreak type: buchholz, sonneborn, direct, gamesWon' },
+        ],
+        responses: {
+          200: {
+            description: 'Standings sorted by tiebreak',
+            example: {
+              tiebreak: 'buchholz',
+              standings: [
+                { rank: 1, playerId: 'player1', name: 'John Doe', score: 7.5, buchholz: 45.5 },
+                { rank: 2, playerId: 'player2', name: 'Jane Smith', score: 7.5, buchholz: 43.0 },
+              ],
+            },
+          },
+          400: { description: 'Invalid tiebreak type', example: { statusCode: 400, message: 'Invalid tiebreak type' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments/trn123/standings/by/buchholz`,
+        },
+      },
+    ],
+  },
+  {
+    id: 'pairings',
+    title: 'Pairings',
+    routes: [
+      {
+        id: 'post-pairings-swiss',
+        method: 'POST',
+        path: '/tournaments/:tournamentId/pairings/generate/swiss',
+        description: 'Generate Swiss system pairings for a round.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+        ],
+        requestBody: [
+          { name: 'roundNumber', type: 'number', required: true, description: 'Round number' },
+        ],
+        responses: {
+          200: {
+            description: 'Swiss pairings generated',
+            example: {
+              roundId: 'round1',
+              pairings: [
+                { id: 'pair1', whiteId: 'player1', blackId: 'player2', boardNumber: 1 },
+                { id: 'pair2', whiteId: 'player3', blackId: 'player4', boardNumber: 2 },
+              ],
+            },
+          },
+          400: { description: 'Invalid format', example: { statusCode: 400, message: 'Tournament is not using Swiss format' } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments/trn123/pairings/generate/swiss \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"roundNumber":1}'`,
+        },
+      },
+      {
+        id: 'post-pairings-roundrobin',
+        method: 'POST',
+        path: '/tournaments/:tournamentId/pairings/generate/roundrobin',
+        description: 'Generate all Round-Robin pairings at once.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+        ],
+        responses: {
+          200: {
+            description: 'Round-Robin pairings generated',
+            example: {
+              rounds: [
+                { roundNumber: 1, pairings: [{ whiteId: 'player1', blackId: 'player2' }] },
+                { roundNumber: 2, pairings: [{ whiteId: 'player2', blackId: 'player3' }] },
+              ],
+            },
+          },
+          400: { description: 'Invalid format', example: { statusCode: 400, message: 'Tournament is not using Round-Robin format' } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments/trn123/pairings/generate/roundrobin \\
+  -H "Authorization: Bearer eyJhbGc..."`,
+        },
+      },
+      {
+        id: 'post-pairings-elimination',
+        method: 'POST',
+        path: '/tournaments/:tournamentId/pairings/generate/elimination',
+        description: 'Generate Elimination bracket pairings for a round.',
+        auth: 'JWT',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+        ],
+        requestBody: [
+          { name: 'roundNumber', type: 'number', required: true, description: 'Round number' },
+        ],
+        responses: {
+          200: {
+            description: 'Elimination pairings generated',
+            example: {
+              roundId: 'round1',
+              pairings: [
+                { id: 'pair1', whiteId: 'player1', blackId: 'player8', boardNumber: 1 },
+                { id: 'pair2', whiteId: 'player4', blackId: 'player5', boardNumber: 2 },
+              ],
+            },
+          },
+          400: { description: 'Invalid format', example: { statusCode: 400, message: 'Tournament is not using Elimination format' } },
+          401: { description: 'Unauthorized', example: { statusCode: 401, message: 'Unauthorized' } },
+        },
+        examples: {
+          curl: `curl -X POST http://localhost:8082/tournaments/trn123/pairings/generate/elimination \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer eyJhbGc..." \\
+  -d '{"roundNumber":1}'`,
+        },
+      },
+    ],
+  },
+  {
+    id: 'export',
+    title: 'Export',
+    routes: [
+      {
+        id: 'get-export-pgn',
+        method: 'GET',
+        path: '/tournaments/:tournamentId/export/pgn',
+        description: 'Export all tournament games as PGN.',
+        auth: 'public',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+        ],
+        responses: {
+          200: { description: 'PGN file content', example: { pgn: '[Event "Tournament"]...' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments/trn123/export/pgn`,
+        },
+      },
+      {
+        id: 'get-export-csv',
+        method: 'GET',
+        path: '/tournaments/:tournamentId/export/csv',
+        description: 'Export tournament results as CSV.',
+        auth: 'public',
+        pathParams: [
+          { name: 'tournamentId', type: 'string', description: 'Tournament ID' },
+        ],
+        responses: {
+          200: { description: 'CSV file content', example: { csv: 'Player,Score,Rating,...' } },
+          404: { description: 'Tournament not found', example: { statusCode: 404, message: 'Tournament not found' } },
+        },
+        examples: {
+          curl: `curl -X GET http://localhost:8082/tournaments/trn123/export/csv`,
+        },
+      },
+    ],
+  },
 ];

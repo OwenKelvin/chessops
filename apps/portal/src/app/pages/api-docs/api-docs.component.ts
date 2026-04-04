@@ -1,37 +1,54 @@
 import { Component, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CodeBlockComponent } from '@chessops/ui/code-block';
-import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.data';
+import {
+  apiDocumentation,
+  type SectionDoc,
+  type RouteDoc,
+} from './api-docs.data';
 
 @Component({
   selector: 'chessops-api-docs',
   standalone: true,
   imports: [CommonModule, CodeBlockComponent],
   template: `
-    <div class="api-docs-container">
+    <div class="flex min-h-screen bg-background text-foreground">
+
       <!-- Left Sidebar -->
-      <aside class="sidebar">
-        <nav class="sidebar-nav">
-          <h2 class="nav-title">API Reference</h2>
+      <aside class="sticky top-0 w-70 h-screen overflow-y-auto bg-surface border-r border-border px-4 py-6">
+        <nav>
+          <h2 class="text-xl font-semibold mb-6 text-primary">API Reference</h2>
+
           @for (section of sections; track section.id) {
-            <div class="nav-section">
-              <h3 class="nav-section-title" (click)="toggleSection(section.id)">
+            <div class="mb-4">
+              <h3
+                class="text-xs font-semibold uppercase tracking-wide text-muted cursor-pointer flex justify-between items-center py-2"
+                (click)="toggleSection(section.id)"
+              >
                 {{ section.title }}
-                <span class="chevron" [class.expanded]="expandedSections.has(section.id)">▼</span>
+                <span
+                  class="text-[0.625rem] transition-transform duration-200"
+                  [class.rotate-180]="expandedSections.has(section.id)"
+                >▼</span>
               </h3>
+
               @if (expandedSections.has(section.id)) {
-                <ul class="nav-routes">
+                <ul class="list-none p-0 mt-2 ml-3 space-y-1">
                   @for (route of section.routes; track route.id) {
                     <li>
                       <a
                         [href]="'#' + route.id"
-                        [class.active]="activeRoute === route.id"
+                        [class]="'flex items-center gap-2 no-underline text-[0.8125rem] px-2 py-1 rounded transition-all duration-150 ' +
+                      (activeRoute === route.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-surface-elevated hover:text-foreground')"
                         (click)="setActiveRoute(route.id)"
                       >
-                        <span class="method-badge" [class]="'method-' + route.method.toLowerCase()">
+                      <span
+                        [class]="getMethodBadgeClass(route.method) + ' text-[0.625rem] font-bold px-1.5 py-0.5 rounded uppercase min-w-10 text-center'">
                           {{ route.method }}
                         </span>
-                        <span class="route-path">{{ route.path }}</span>
+                        <span class="font-mono text-xs">{{ route.path }}</span>
                       </a>
                     </li>
                   }
@@ -43,57 +60,73 @@ import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.dat
       </aside>
 
       <!-- Main Content -->
-      <main class="main-content">
-        <div class="content-wrapper">
-          <h1 class="page-title">ChessOps API Documentation</h1>
-          <p class="page-intro">Complete API reference for the ChessOps identity and authentication module.</p>
+      <main class="flex-1 overflow-x-hidden">
+        <div class="max-w-4xl mx-auto px-12 py-8">
+          <h1 class="text-4xl font-bold mb-2">ChessOps API Documentation</h1>
+          <p class="text-muted-foreground mb-8">Complete API reference for the ChessOps identity and authentication
+            module.</p>
 
           @for (section of sections; track section.id) {
-            <section [id]="section.id" class="doc-section">
-              <h2 class="section-title">{{ section.title }}</h2>
+            <section [id]="section.id" class="mb-12">
+              <h2 class="text-2xl font-semibold border-b-2 border-border pb-2 mb-6">{{ section.title }}</h2>
 
               @for (route of section.routes; track route.id) {
-                <div [id]="route.id" class="route-doc">
-                  <div class="route-header">
-                    <span class="method-badge" [class]="'method-' + route.method.toLowerCase()">
+                <div [id]="route.id" class="mb-10 pb-8 border-b border-border">
+
+                  <!-- Route Header -->
+                  <div class="flex items-center gap-4 mb-3">
+                    <span
+                      [class]="getMethodBadgeClass(route.method) + ' text-[0.625rem] font-bold px-1.5 py-0.5 rounded uppercase min-w-10 text-center'">
                       {{ route.method }}
                     </span>
-                    <code class="route-path-large">{{ route.path }}</code>
+                    <code class="font-mono text-base text-accent">{{ route.path }}</code>
                   </div>
 
-                  <p class="route-description">{{ route.description }}</p>
+                  <p class="mb-4">{{ route.description }}</p>
 
-                  <div class="auth-badge" [class]="'auth-' + route.auth.toLowerCase()">
-                    <span class="auth-icon">🔐</span>
-                    <span class="auth-label">Auth: {{ route.auth }}</span>
+                  <!-- Auth Badge -->
+                  <div
+                    [class]="getAuthBadgeClass(route.auth) + ' inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-6'">
+                    <span class="text-sm">🔐</span>
+                    <span>Auth: {{ route.auth }}</span>
                   </div>
 
                   <!-- Request Body -->
                   @if (route.requestBody && route.requestBody.length > 0) {
-                    <div class="schema-section">
-                      <h3 class="schema-title">Request Body</h3>
-                      <table class="schema-table">
+                    <div class="my-6">
+                      <h3 class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Request Body</h3>
+                      <table class="w-full border-collapse text-sm">
                         <thead>
-                          <tr>
-                            <th>Field</th>
-                            <th>Type</th>
-                            <th>Required</th>
-                            <th>Description</th>
-                          </tr>
+                        <tr>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">Field
+                          </th>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">Type
+                          </th>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">
+                            Required
+                          </th>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">
+                            Description
+                          </th>
+                        </tr>
                         </thead>
                         <tbody>
                           @for (field of route.requestBody; track field.name) {
                             <tr>
-                              <td><code>{{ field.name }}</code></td>
-                              <td><code>{{ field.type }}</code></td>
-                              <td>
+                              <td class="px-3 py-2 border border-border"><code
+                                class="font-mono text-[0.8125rem] text-accent">{{ field.name }}</code></td>
+                              <td class="px-3 py-2 border border-border"><code
+                                class="font-mono text-[0.8125rem] text-accent">{{ field.type }}</code></td>
+                              <td class="px-3 py-2 border border-border">
                                 @if (field.required) {
-                                  <span class="required-badge">Required</span>
+                                  <span
+                                    class="inline-block px-2 py-0.5 bg-error-light text-error rounded text-[0.6875rem] font-semibold">Required</span>
                                 } @else {
-                                  <span class="optional-badge">Optional</span>
+                                  <span
+                                    class="inline-block px-2 py-0.5 bg-muted text-muted-foreground rounded text-[0.6875rem]">Optional</span>
                                 }
                               </td>
-                              <td>{{ field.description }}</td>
+                              <td class="px-3 py-2 border border-border">{{ field.description }}</td>
                             </tr>
                           }
                         </tbody>
@@ -103,22 +136,29 @@ import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.dat
 
                   <!-- Path Parameters -->
                   @if (route.pathParams && route.pathParams.length > 0) {
-                    <div class="schema-section">
-                      <h3 class="schema-title">Path Parameters</h3>
-                      <table class="schema-table">
+                    <div class="my-6">
+                      <h3 class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Path Parameters</h3>
+                      <table class="w-full border-collapse text-sm">
                         <thead>
-                          <tr>
-                            <th>Parameter</th>
-                            <th>Type</th>
-                            <th>Description</th>
-                          </tr>
+                        <tr>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">
+                            Parameter
+                          </th>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">Type
+                          </th>
+                          <th class="text-left px-3 py-2 bg-surface-elevated border border-border font-semibold">
+                            Description
+                          </th>
+                        </tr>
                         </thead>
                         <tbody>
                           @for (param of route.pathParams; track param.name) {
                             <tr>
-                              <td><code>{{ param.name }}</code></td>
-                              <td><code>{{ param.type }}</code></td>
-                              <td>{{ param.description }}</td>
+                              <td class="px-3 py-2 border border-border"><code
+                                class="font-mono text-[0.8125rem] text-accent">{{ param.name }}</code></td>
+                              <td class="px-3 py-2 border border-border"><code
+                                class="font-mono text-[0.8125rem] text-accent">{{ param.type }}</code></td>
+                              <td class="px-3 py-2 border border-border">{{ param.description }}</td>
                             </tr>
                           }
                         </tbody>
@@ -127,16 +167,17 @@ import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.dat
                   }
 
                   <!-- Responses -->
-                  <div class="schema-section">
-                    <h3 class="schema-title">Responses</h3>
+                  <div class="my-6">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Responses</h3>
                     @for (status of responseStatuses; track status) {
                       @if (route.responses[status]) {
-                        <div class="response-block">
-                          <div class="response-header">
-                            <span class="status-code" [class]="'status-' + getStatusCodeClass(status)">
+                        <div class="mb-4">
+                          <div class="flex items-center gap-3 mb-2">
+                            <span
+                              [class]="getStatusBadgeClass(status) + ' font-mono text-xs font-bold px-2 py-0.5 rounded'">
                               {{ status }}
                             </span>
-                            <span class="response-description">{{ route.responses[status].description }}</span>
+                            <span class="text-sm">{{ route.responses[status].description }}</span>
                           </div>
                           @if (route.responses[status].example) {
                             <chessops-code-block
@@ -150,38 +191,44 @@ import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.dat
                   </div>
 
                   <!-- Code Examples -->
-                  <div class="examples-section">
-                    <h3 class="schema-title">Examples</h3>
-                    <div class="tabs">
+                  <div class="mt-6">
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-muted mb-3">Examples</h3>
+                    <div class="flex gap-1 mb-0">
                       <button
                         type="button"
-                        class="tab-button"
-                        [class.active]="activeTabs[route.id] === 'curl'"
+                        [class]="'px-3 py-1.5 text-xs border border-b-0 rounded-t transition-all duration-150 cursor-pointer ' +
+                          (activeTabs[route.id] === 'curl' || !activeTabs[route.id]
+                            ? 'bg-surface-elevated text-foreground border-accent'
+                            : 'bg-surface text-muted-foreground border-border hover:bg-surface-elevated')"
                         (click)="activeTabs[route.id] = 'curl'"
-                      >
-                        cURL
+                      >cURL
                       </button>
+
                       @if (route.examples.js) {
                         <button
                           type="button"
-                          class="tab-button"
-                          [class.active]="activeTabs[route.id] === 'js'"
+                          [class]="'px-3 py-1.5 text-xs border border-b-0 rounded-t transition-all duration-150 cursor-pointer ' +
+                            (activeTabs[route.id] === 'js'
+                              ? 'bg-surface-elevated text-foreground border-accent'
+                              : 'bg-surface text-muted-foreground border-border hover:bg-surface-elevated')"
                           (click)="activeTabs[route.id] = 'js'"
-                        >
-                          JavaScript
+                        >JavaScript
                         </button>
                       }
+
                       @if (route.examples.python) {
                         <button
                           type="button"
-                          class="tab-button"
-                          [class.active]="activeTabs[route.id] === 'python'"
+                          [class]="'px-3 py-1.5 text-xs border border-b-0 rounded-t transition-all duration-150 cursor-pointer ' +
+                            (activeTabs[route.id] === 'python'
+                              ? 'bg-surface-elevated text-foreground border-accent'
+                              : 'bg-surface text-muted-foreground border-border hover:bg-surface-elevated')"
                           (click)="activeTabs[route.id] = 'python'"
-                        >
-                          Python
+                        >Python
                         </button>
                       }
                     </div>
+
                     @if (activeTabs[route.id] === 'curl' || !activeTabs[route.id]) {
                       <chessops-code-block [code]="route.examples.curl" language="bash" />
                     }
@@ -192,6 +239,7 @@ import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.dat
                       <chessops-code-block [code]="route.examples.python" language="python" />
                     }
                   </div>
+
                 </div>
               }
             </section>
@@ -200,318 +248,18 @@ import { apiDocumentation, type SectionDoc, type RouteDoc } from './api-docs.dat
       </main>
     </div>
   `,
-  styles: `
-    .api-docs-container {
-      display: flex;
-      min-height: 100vh;
-      background: var(--color-background);
-      color: var(--color-foreground);
-    }
-
-    /* Sidebar */
-    .sidebar {
-      position: sticky;
-      top: 0;
-      width: 280px;
-      height: 100vh;
-      overflow-y: auto;
-      background: var(--color-surface);
-      border-right: 1px solid var(--color-border);
-      padding: 1.5rem 1rem;
-    }
-
-    .nav-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      color: var(--color-primary);
-    }
-
-    .nav-section {
-      margin-bottom: 1rem;
-    }
-
-    .nav-section-title {
-      font-size: 0.875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--color-muted);
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 0;
-    }
-
-    .chevron {
-      font-size: 0.625rem;
-      transition: transform 0.2s;
-    }
-
-    .chevron.expanded {
-      transform: rotate(180deg);
-    }
-
-    .nav-routes {
-      list-style: none;
-      padding: 0;
-      margin: 0.5rem 0 0 0.75rem;
-    }
-
-    .nav-routes li {
-      margin: 0.25rem 0;
-    }
-
-    .nav-routes a {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-decoration: none;
-      color: var(--color-muted-foreground);
-      font-size: 0.8125rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      transition: all 0.15s;
-    }
-
-    .nav-routes a:hover {
-      background: var(--color-surface-elevated);
-      color: var(--color-foreground);
-    }
-
-    .nav-routes a.active {
-      background: var(--color-primary);
-      color: var(--color-primary-foreground);
-    }
-
-    .method-badge {
-      font-size: 0.625rem;
-      font-weight: 700;
-      padding: 0.125rem 0.375rem;
-      border-radius: 0.25rem;
-      text-transform: uppercase;
-      min-width: 2.5rem;
-      text-align: center;
-    }
-
-    .method-get { background: var(--color-info); color: white; }
-    .method-post { background: var(--color-success); color: white; }
-    .method-put { background: var(--color-warning); color: var(--color-foreground); }
-    .method-patch { background: var(--color-warning); color: var(--color-foreground); }
-    .method-delete { background: var(--color-error); color: white; }
-
-    .route-path {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-    }
-
-    /* Main Content */
-    .main-content {
-      flex: 1;
-      overflow-x: hidden;
-    }
-
-    .content-wrapper {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem 3rem;
-    }
-
-    .page-title {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .page-intro {
-      color: var(--color-muted-foreground);
-      margin-bottom: 2rem;
-    }
-
-    .doc-section {
-      margin-bottom: 3rem;
-    }
-
-    .section-title {
-      font-size: 1.5rem;
-      border-bottom: 2px solid var(--color-border);
-      padding-bottom: 0.5rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .route-doc {
-      margin-bottom: 2.5rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .route-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .route-path-large {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1rem;
-      color: var(--color-accent);
-    }
-
-    .route-description {
-      color: var(--color-foreground);
-      margin-bottom: 1rem;
-    }
-
-    .auth-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .auth-public { background: var(--color-info-light); color: var(--color-info); }
-    .auth-jwt { background: var(--color-warning-light); color: var(--color-warning); }
-    .auth-admin { background: var(--color-error-light); color: var(--color-error); }
-
-    .auth-icon { font-size: 0.875rem; }
-
-    /* Schema Tables */
-    .schema-section {
-      margin: 1.5rem 0;
-    }
-
-    .schema-title {
-      font-size: 0.875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--color-muted);
-      margin-bottom: 0.75rem;
-    }
-
-    .schema-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-
-    .schema-table th {
-      text-align: left;
-      padding: 0.5rem 0.75rem;
-      background: var(--color-surface-elevated);
-      border: 1px solid var(--color-border);
-      font-weight: 600;
-    }
-
-    .schema-table td {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid var(--color-border);
-    }
-
-    .schema-table code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8125rem;
-      color: var(--color-accent);
-    }
-
-    .required-badge {
-      display: inline-block;
-      padding: 0.125rem 0.5rem;
-      background: var(--color-error-light);
-      color: var(--color-error);
-      border-radius: 0.25rem;
-      font-size: 0.6875rem;
-      font-weight: 600;
-    }
-
-    .optional-badge {
-      display: inline-block;
-      padding: 0.125rem 0.5rem;
-      background: var(--color-muted);
-      color: var(--color-muted-foreground);
-      border-radius: 0.25rem;
-      font-size: 0.6875rem;
-    }
-
-    /* Responses */
-    .response-block {
-      margin-bottom: 1rem;
-    }
-
-    .response-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .status-code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 0.125rem 0.5rem;
-      border-radius: 0.25rem;
-    }
-
-    .status-200 { background: var(--color-success); color: white; }
-    .status-400, .status-422 { background: var(--color-warning); color: var(--color-foreground); }
-    .status-401, .status-403 { background: var(--color-error); color: white; }
-    .status-404 { background: var(--color-muted); color: var(--color-foreground); }
-    .status-409 { background: var(--color-info); color: white; }
-
-    .response-description {
-      font-size: 0.875rem;
-      color: var(--color-foreground);
-    }
-
-    /* Examples */
-    .examples-section {
-      margin-top: 1.5rem;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 0.25rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .tab-button {
-      padding: 0.375rem 0.75rem;
-      font-size: 0.75rem;
-      border: 1px solid var(--color-border);
-      border-bottom: none;
-      background: var(--color-surface);
-      color: var(--color-muted-foreground);
-      border-radius: 0.375rem 0.375rem 0 0;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .tab-button:hover {
-      background: var(--color-surface-elevated);
-    }
-
-    .tab-button.active {
-      background: var(--color-surface-elevated);
-      color: var(--color-foreground);
-      border-color: var(--color-accent);
-    }
-
-    /* Dark mode adjustments */
-    @media (prefers-color-scheme: dark) {
-      .sidebar {
-        background: #1a1a1a;
-      }
-    }
-  `,
 })
 export class ApiDocsComponent implements AfterViewInit, OnDestroy {
   sections = apiDocumentation;
-  expandedSections = new Set<string>(['registration', 'session', 'oauth', 'password', 'mfa', 'profile', 'admin']);
+  expandedSections = new Set<string>([
+    'registration',
+    'session',
+    'oauth',
+    'password',
+    'mfa',
+    'profile',
+    'admin',
+  ]);
   activeRoute = '';
   activeTabs: Record<string, string> = {};
   responseStatuses = ['200', '400', '401', '403', '404', '409', '422'] as const;
@@ -541,13 +289,49 @@ export class ApiDocsComponent implements AfterViewInit, OnDestroy {
   }
 
   getTabLabel(tab: string): string {
-    const labels: Record<string, string> = { curl: 'cURL', js: 'JavaScript', python: 'Python' };
+    const labels: Record<string, string> = {
+      curl: 'cURL',
+      js: 'JavaScript',
+      python: 'Python',
+    };
     return labels[tab] || tab;
   }
 
-
   getStatusCodeClass(status: string): string {
     return status;
+  }
+
+  getMethodBadgeClass(method: string): string {
+    const map: Record<string, string> = {
+      GET: 'bg-info text-white',
+      POST: 'bg-success text-white',
+      PUT: 'bg-warning text-foreground',
+      PATCH: 'bg-warning text-foreground',
+      DELETE: 'bg-error text-white',
+    };
+    return map[method.toUpperCase()] ?? 'bg-muted text-white';
+  }
+
+  getAuthBadgeClass(auth: string): string {
+    const map: Record<string, string> = {
+      public: 'bg-info-light text-info',
+      jwt: 'bg-warning-light text-warning',
+      admin: 'bg-error-light text-error',
+    };
+    return map[auth.toLowerCase()] ?? 'bg-muted text-muted-foreground';
+  }
+
+  getStatusBadgeClass(status: string): string {
+    const map: Record<string, string> = {
+      '200': 'bg-success text-white',
+      '400': 'bg-warning text-foreground',
+      '401': 'bg-error text-white',
+      '403': 'bg-error text-white',
+      '404': 'bg-muted text-foreground',
+      '409': 'bg-info text-white',
+      '422': 'bg-warning text-foreground',
+    };
+    return map[status] ?? 'bg-muted text-white';
   }
 
   private setupScrollSpy(): void {
