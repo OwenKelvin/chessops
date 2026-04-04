@@ -1,0 +1,310 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/prisma/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String?
+  displayName     String?
+  avatarUrl       String?
+  emailVerifiedAt DateTime?
+  isSuspended     Boolean   @default(false)
+  role            String    @default("user")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sessions          Session[]
+  oauthAccounts     OauthAccount[]
+  mfaSecret         MfaSecret?
+  recoveryTokens    AccountRecovery[]
+  emailVerification EmailVerification?
+  apiKeys           ApiKey[]
+  apps              App[]
+  tournaments       Tournament[]
+  players           Player[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model OauthAccount {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String // "google" | "github"
+  providerAccountId String // User's ID with the provider
+  accessToken       String
+  refreshToken      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model MfaSecret {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  secret      String
+  backupCodes String // JSON array of backup codes
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AccountRecovery {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String // User-friendly name for the key
+  keyHash     String    @unique // Hashed API key (store sha256 of key)
+  prefix      String // First 8 chars of the key for identification (e.g., "sk_live_...")
+  permissions String // JSON array of permissions
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyHash])
+  @@index([prefix])
+}
+
+model App {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  description   String?
+  callbackUrls  String // JSON array of OAuth callback URLs
+  redirectUris  String // JSON array of redirect URIs
+  clientId      String   @unique
+  clientSecret  String   @unique
+  isActive      Boolean  @default(true)
+  webhookUrl    String?
+  webhookSecret String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([userId])
+  @@index([clientId])
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  type      String // e.g., "tournament.created", "match.completed"
+  payload   String // JSON payload
+  createdAt DateTime @default(now())
+
+  deliveries WebhookDelivery[]
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+model WebhookDelivery {
+  id           String    @id @default(cuid())
+  eventId      String
+  appId        String
+  status       String    @default("pending") // pending, success, failed
+  url          String
+  attempt      Int       @default(0)
+  maxAttempts  Int       @default(5)
+  responseCode Int?
+  responseBody String?
+  nextRetryAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  event WebhookEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  app   App          @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([appId])
+  @@index([status])
+  @@index([nextRetryAt])
+}
+
+// Tournament Models
+
+model Tournament {
+  id               String    @id @default(cuid())
+  ownerId          String // User who created the tournament
+  name             String
+  description      String?
+  location         String?
+  startDate        DateTime
+  endDate          DateTime?
+  status           String    @default("draft") // draft, registration, active, completed, cancelled
+  format           String    @default("swiss") // swiss, roundrobin, elimination
+  maxRounds        Int       @default(9)
+  timeControl      String? // e.g., "90+30", "5+0"
+  maxPlayers       Int?
+  isPublic         Boolean   @default(true)
+  registrationOpen Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  owner   User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  players TournamentPlayer[]
+  rounds  Round[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([startDate])
+}
+
+model TournamentPlayer {
+  id            String   @id @default(cuid())
+  tournamentId  String
+  playerId      String // Reference to Player model
+  seed          Int      @default(0)
+  rating        Int?
+  status        String   @default("active") // active, withdrawn, expelled
+  withdrawRound Int? // Round number when withdrawn
+  createdAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  results    Result[]
+
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId])
+}
+
+model Player {
+  id          String    @id @default(cuid())
+  ownerId     String // User who owns this player profile
+  firstName   String
+  lastName    String
+  email       String?
+  fideId      String? // FIDE ID
+  nationalId  String?
+  rating      Int       @default(0)
+  dateOfBirth DateTime?
+  gender      String? // M, F, O
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  owner         User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  tournaments   TournamentPlayer[]
+  pairingsWhite Pairing[]          @relation("PairingWhite")
+  pairingsBlack Pairing[]          @relation("PairingBlack")
+
+  @@index([ownerId])
+  @@index([fideId])
+}
+
+model Round {
+  id           String    @id @default(cuid())
+  tournamentId String
+  roundNumber  Int
+  name         String?
+  status       String    @default("pending") // pending, published, completed
+  publishedAt  DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  pairings   Pairing[]
+
+  @@unique([tournamentId, roundNumber])
+  @@index([tournamentId])
+}
+
+model Pairing {
+  id          String   @id @default(cuid())
+  roundId     String
+  whiteId     String // Player ID
+  blackId     String // Player ID
+  boardNumber Int?
+  result      String? // 1-0, 0-1, 1/2-1/2, *-# (unplayed)
+  whiteScore  Float? // 1, 0.5, 0
+  blackScore  Float? // 1, 0.5, 0
+  status      String   @default("pending") // pending, completed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  round Round  @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  white Player @relation(fields: [whiteId], references: [id], name: "PairingWhite")
+  black Player @relation(fields: [blackId], references: [id], name: "PairingBlack")
+
+  @@index([roundId])
+  @@index([whiteId])
+  @@index([blackId])
+}
+
+model Result {
+  id                 String   @id @default(cuid())
+  tournamentId       String
+  playerId           String
+  tournamentPlayerId String   @unique
+  roundId            String
+  opponentId         String
+  color              String // W, B
+  result             String // 1, 0.5, 0 (from player's perspective)
+  createdAt          DateTime @default(now())
+
+  tournamentPlayer TournamentPlayer @relation(fields: [tournamentPlayerId], references: [id], onDelete: Cascade)
+
+  @@index([tournamentId])
+  @@index([playerId])
+  @@index([roundId])
+}
