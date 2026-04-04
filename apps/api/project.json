@@ -67,10 +67,9 @@
     },
     "test": {
       "executor": "@nx/vitest:test",
-      "outputs": ["{workspaceRoot}/coverage/apps/api"],
+      "outputs": ["{options.reportsDirectory}"],
       "options": {
-        "passWithNoTests": true,
-        "config": "apps/api/vite.config.ts"
+        "reportsDirectory": "coverage/apps/api"
       }
     }
   }
