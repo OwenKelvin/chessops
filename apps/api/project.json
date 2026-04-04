@@ -64,6 +64,14 @@
     "docker-build": {
       "dependsOn": ["build", "prune"],
       "command": "docker build -f apps/api/Dockerfile . -t chessops-api"
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{workspaceRoot}/coverage/apps/api"],
+      "options": {
+        "passWithNoTests": true,
+        "config": "apps/api/vite.config.ts"
+      }
     }
   }
 }
