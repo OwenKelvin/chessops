@@ -145,9 +145,4 @@ export class TournamentController {
     return this.tournamentService.submitResult(body.pairingId, body.result);
   }
 
-  // Standings
-  @Get(':id/standings')
-  async getStandings(@Param('id') tournamentId: string) {
-    return this.tournamentService.getStandings(tournamentId);
-  }
 }

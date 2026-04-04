@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { injectBackendUrl } from '@chessops/core/providers';
 
 interface RegisterModel {
   email: string;
@@ -101,6 +102,7 @@ interface RegisterModel {
 export class RegisterPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
+  backendUrl = injectBackendUrl()
 
   registerFormValue = signal<RegisterModel>({
     email: '',
@@ -111,7 +113,7 @@ export class RegisterPageComponent {
   submitForm = async (field: FieldTree<RegisterModel>) => {
     try {
       const result = await firstValueFrom(
-        this.http.post('http://localhost:3000/api/auth/register', {
+        this.http.post(`${this.backendUrl}/api/auth/register`, {
           email: field.email().value(),
           password: field.password().value(),
           displayName: field.displayName().value(),
