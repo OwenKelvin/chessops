@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { injectBackendUrl } from '@chessops/core/providers';
 
 interface LoginModel {
   email: string;
@@ -108,13 +109,13 @@ interface LoginModel {
 
             <div class="mt-6 grid grid-cols-2 gap-3">
               <a
-                href="http://localhost:3000/api/auth/google"
+                href="http://localhost:8050/api/auth/google"
                 class="inline-flex justify-center py-2 px-4 border border-border rounded-md shadow-sm bg-surface text-sm font-medium text-foreground hover:bg-surface-elevated"
               >
                 Google
               </a>
               <a
-                href="http://localhost:3000/api/auth/github"
+                href="http://localhost:8050/api/auth/github"
                 class="inline-flex justify-center py-2 px-4 border border-border rounded-md shadow-sm bg-surface text-sm font-medium text-foreground hover:bg-surface-elevated"
               >
                 GitHub
@@ -129,13 +130,14 @@ interface LoginModel {
 export class LoginPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private backendUrl = injectBackendUrl()
 
   loginFormValue = signal<LoginModel>({ email: '', password: '' });
 
   submitForm = async (field: FieldTree<LoginModel>) => {
     try {
       const result = await firstValueFrom(
-        this.http.post('http://localhost:3000/api/auth/login', {
+        this.http.post(`${this.backendUrl}/api/auth/login`, {
           email: field.email().value(),
           password: field.password().value(),
         }),

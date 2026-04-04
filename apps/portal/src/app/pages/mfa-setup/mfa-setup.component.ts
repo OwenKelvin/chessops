@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { injectBackendUrl } from '@chessops/core/providers';
 
 interface MfaVerifyModel {
   token: string;
@@ -20,13 +21,23 @@ interface MfaVerifyModel {
 
 @Component({
   selector: 'app-mfa-setup-page',
-  imports: [FormField, FormRoot, InputComponent, ButtonComponent, CardComponent],
+  imports: [
+    FormField,
+    FormRoot,
+    InputComponent,
+    ButtonComponent,
+    CardComponent,
+  ],
   template: `
     <div
       class="min-h-screen flex items-center justify-center bg-surface py-12 px-4 sm:px-6 lg:px-8"
     >
       <div class="max-w-md w-full">
-        <chessops-card variant="default" [header]="true" title="Set up Two-Factor Authentication">
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Set up Two-Factor Authentication"
+        >
           @if (step() === 'setup') {
             <div class="text-center">
               <p class="text-sm text-muted mb-4">
@@ -78,11 +89,14 @@ interface MfaVerifyModel {
                 Save your backup codes
               </h4>
               <p class="text-xs text-warning/80 mb-2">
-                Store these codes in a safe place. Each code can only be used once.
+                Store these codes in a safe place. Each code can only be used
+                once.
               </p>
               <div class="grid grid-cols-2 gap-2 mt-2">
                 @for (code of backupCodes(); track code) {
-                  <code class="text-xs bg-surface px-2 py-1 rounded">{{ code }}</code>
+                  <code class="text-xs bg-surface px-2 py-1 rounded">{{
+                    code
+                  }}</code>
                 }
               </div>
             </div>
@@ -131,6 +145,7 @@ interface MfaVerifyModel {
 export class MfaSetupPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private backendUrl = injectBackendUrl();
 
   verifyFormValue = signal<MfaVerifyModel>({ token: '' });
 
@@ -139,7 +154,7 @@ export class MfaSetupPageComponent {
       const token = localStorage.getItem('accessToken');
       const result = await firstValueFrom(
         this.http.post(
-          'http://localhost:3000/api/mfa/enable',
+          `${this.backendUrl}/api/mfa/enable`,
           {
             token: field.token().value(),
           },
@@ -187,7 +202,7 @@ export class MfaSetupPageComponent {
   loadMfaSetup() {
     const token = localStorage.getItem('accessToken');
     this.http
-      .get('http://localhost:3000/api/mfa/setup', {
+      .get(`${this.backendUrl}/api/mfa/setup`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .subscribe({

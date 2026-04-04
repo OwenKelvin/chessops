@@ -14,6 +14,7 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { injectBackendUrl } from '@chessops/core/providers';
 
 interface ForgotPasswordModel {
   email: string;
@@ -21,13 +22,24 @@ interface ForgotPasswordModel {
 
 @Component({
   selector: 'app-recovery-page',
-  imports: [RouterLink, FormField, FormRoot, InputComponent, ButtonComponent, CardComponent],
+  imports: [
+    RouterLink,
+    FormField,
+    FormRoot,
+    InputComponent,
+    ButtonComponent,
+    CardComponent,
+  ],
   template: `
     <div
       class="min-h-screen flex items-center justify-center bg-surface py-12 px-4 sm:px-6 lg:px-8"
     >
       <div class="max-w-md w-full">
-        <chessops-card variant="default" [header]="true" title="Reset your password">
+        <chessops-card
+          variant="default"
+          [header]="true"
+          title="Reset your password"
+        >
           <p class="text-center text-sm text-muted mb-6">
             Enter your email and we'll send you a reset link
           </p>
@@ -35,8 +47,8 @@ interface ForgotPasswordModel {
           @if (success()) {
             <div class="rounded-md bg-success/10 p-4">
               <p class="text-sm text-success">
-                If an account exists with that email, we've sent a password reset
-                link.
+                If an account exists with that email, we've sent a password
+                reset link.
               </p>
             </div>
           } @else {
@@ -85,12 +97,13 @@ interface ForgotPasswordModel {
 })
 export class RecoveryPageComponent {
   private http = inject(HttpClient);
+  private backendUrl = injectBackendUrl();
   forgotFormValue = signal<ForgotPasswordModel>({ email: '' });
 
   submitForm = async (field: FieldTree<ForgotPasswordModel>) => {
     try {
       const result = await firstValueFrom(
-        this.http.post('http://localhost:3000/api/auth/forgot-password', {
+        this.http.post(`${this.backendUrl}/api/auth/forgot-password`, {
           email: field.email().value(),
         }),
       );

@@ -14,6 +14,7 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { injectBackendUrl } from '@chessops/core/providers';
 
 interface PasswordChangeModel {
   currentPassword: string;
@@ -179,6 +180,7 @@ interface PasswordChangeModel {
   `,
 })
 export class AccountPageComponent implements OnInit {
+  private backendUrl = injectBackendUrl();
   passwordFormValue = signal<PasswordChangeModel>({
     currentPassword: '',
     newPassword: '',
@@ -188,7 +190,7 @@ export class AccountPageComponent implements OnInit {
     try {
       await firstValueFrom(
         this.http.post(
-          'http://localhost:3000/api/auth/change-password',
+          `${this.backendUrl}/api/auth/change-password`,
           {
             currentPassword: field.currentPassword().value(),
             newPassword: field.newPassword().value(),
@@ -247,7 +249,7 @@ export class AccountPageComponent implements OnInit {
   loadUser() {
     const token = localStorage.getItem('accessToken');
     this.http
-      .get('http://localhost:3000/api/auth/me', {
+      .get(`${this.backendUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .subscribe({
@@ -259,7 +261,7 @@ export class AccountPageComponent implements OnInit {
   checkMfaStatus() {
     const token = localStorage.getItem('accessToken');
     this.http
-      .get('http://localhost:3000/api/mfa/status', {
+      .get(`${this.backendUrl}/api/mfa/status`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .subscribe({
@@ -279,7 +281,7 @@ export class AccountPageComponent implements OnInit {
 
     this.http
       .post(
-        'http://localhost:3000/api/mfa/disable',
+        `${this.backendUrl}/api/mfa/disable`,
         { token: code },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -305,7 +307,7 @@ export class AccountPageComponent implements OnInit {
 
     this.http
       .post(
-        'http://localhost:3000/api/auth/revoke-sessions',
+        `${this.backendUrl}/api/auth/revoke-sessions`,
         {},
         {
           headers: {
@@ -327,7 +329,7 @@ export class AccountPageComponent implements OnInit {
 
   logout() {
     this.http
-      .post('http://localhost:3000/api/auth/logout', {
+      .post(`${this.backendUrl}/api/auth/logout`, {
         refreshToken: localStorage.getItem('refreshToken'),
       })
       .subscribe({
