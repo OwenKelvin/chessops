@@ -61,10 +61,10 @@ export type InputSize = InputVariants['size'];
     </div>
   `,
 })
-export class InputComponent implements FormValueControl<string | null> {
+export class InputComponent implements FormValueControl<string | number | null> {
   // --- FormValueControl Implementation ---
   // The 'value' is now a model signal that handles 2-way syncing automatically
-  readonly value = model<string | null>(null);
+  readonly value = model<string | number | null>(null);
 
   // Signal Forms automatically binds these if defined as inputs/models
   readonly disabled = input<boolean>(false);

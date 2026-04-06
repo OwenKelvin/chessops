@@ -189,6 +189,8 @@ model Tournament {
   name            String
   description     String?
   location        String?
+  country         String?  // ISO country code (e.g., "US", "DE", "IN")
+  countryName     String?  // Full country name for display
   startDate       DateTime
   endDate         DateTime?
   status          String   @default("draft") // draft, registration, active, completed, cancelled
@@ -208,6 +210,7 @@ model Tournament {
   @@index([ownerId])
   @@index([status])
   @@index([startDate])
+  @@index([country])
 }
 
 model TournamentPlayer {
