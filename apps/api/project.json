@@ -61,6 +61,13 @@
       "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
       "executor": "nx:noop"
     },
+    "prisma:migrate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate dev --config apps/api/prisma.config.ts --schema apps/api/prisma/schema.prisma --name add_country_fields",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "docker-build": {
       "dependsOn": ["build", "prune"],
       "command": "docker build -f apps/api/Dockerfile . -t chessops-api"

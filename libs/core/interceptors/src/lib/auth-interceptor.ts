@@ -10,7 +10,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Append backend URL only for relative URLs
   const apiUrl = isRelativeUrl ? `${backendUrl}/${req.url}` : req.url;
-  alert(apiUrl);
 
   const clonedReq = req.clone({
     url: apiUrl,

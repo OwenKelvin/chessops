@@ -38,35 +38,69 @@ export class TournamentService {
     return tournament;
   }
 
-  async findAll(userId: string, filters?: { status?: string; isPublic?: boolean }) {
-    const where: any = { ownerId: userId };
+  async findAll(
+    userId: string | null,
+    filters?: {
+      status?: string;
+      isPublic?: boolean;
+      country?: string;
+      format?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    const where: any = {};
+
+    // If user is not authenticated, only show public tournaments
+    if (!userId) {
+      where.isPublic = true;
+    }
 
     if (filters?.status) {
       where.status = filters.status;
     }
-
-    return this.prisma.tournament.findMany({
-      where,
-      include: {
-        players: {
-          include: { player: true },
-        },
-        _count: {
-          select: { rounds: true, players: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  async findOne(id: string, ownerId?: string) {
-    const where: any = { id };
-    if (ownerId) {
-      where.ownerId = ownerId;
+    if (filters?.country) {
+      where.country = filters.country;
+    }
+    if (filters?.format) {
+      where.format = filters.format;
+    }
+    if (filters?.search) {
+      where.name = { contains: filters.search, mode: 'insensitive' };
+    }
+    // Only apply isPublic filter if explicitly set (for authenticated users filtering their own tournaments)
+    if (filters?.isPublic !== undefined) {
+      where.isPublic = filters.isPublic;
     }
 
+    const skip = filters?.page && filters?.limit ? (Number(filters.page) - 1) * Number(filters.limit) : undefined;
+    const take = filters?.limit ? Number(filters.limit) : undefined;
+
+    const [tournaments, total] = await Promise.all([
+      this.prisma.tournament.findMany({
+        where,
+        include: {
+          players: {
+            include: { player: true },
+          },
+          _count: {
+            select: { rounds: true, players: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.tournament.count({ where }),
+    ]);
+
+    return { tournaments, total };
+  }
+
+  async findOne(id: string) {
     const tournament = await this.prisma.tournament.findUnique({
-      where,
+      where: { id },
       include: {
         players: {
           include: { player: true },
@@ -134,7 +168,7 @@ export class TournamentService {
     });
 
     if (!tournament) {
-      throw new NotFoundException('Tournament not found');
+      throw new NotFoundException('Tournament not found or you do not have permission to delete it');
     }
 
     await this.prisma.tournament.delete({

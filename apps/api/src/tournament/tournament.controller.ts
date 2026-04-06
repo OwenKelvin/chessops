@@ -10,17 +10,18 @@ import {
   UseGuards,
   Req,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { TournamentService } from './tournament.service';
 import { CreateTournamentDto, UpdateTournamentDto } from './dto/create-tournament.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('tournaments')
-@UseGuards(JwtAuthGuard)
 export class TournamentController {
   constructor(private tournamentService: TournamentService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(@Req() req: any, @Body() createDto: CreateTournamentDto) {
     return this.tournamentService.create(req.user.userId, createDto);
   }
@@ -30,19 +31,32 @@ export class TournamentController {
     @Req() req: any,
     @Query('status') status?: string,
     @Query('isPublic') isPublic?: boolean,
+    @Query('country') country?: string,
+    @Query('format') format?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
     const filters: any = {};
     if (status) filters.status = status;
     if (isPublic !== undefined) filters.isPublic = isPublic;
-    return this.tournamentService.findAll(req.user.userId, filters);
+    if (country) filters.country = country;
+    if (format) filters.format = format;
+    if (search) filters.search = search;
+    if (page) filters.page = page;
+    if (limit) filters.limit = limit;
+
+    const userId = req.user?.userId;
+    return this.tournamentService.findAll(userId, filters);
   }
 
   @Get(':id')
-  async findOne(@Req() req: any, @Param('id') id: string) {
-    return this.tournamentService.findOne(id, req.user.userId);
+  async findOne(@Param('id') id: string) {
+    return this.tournamentService.findOne(id);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Req() req: any,
     @Param('id') id: string,
@@ -52,12 +66,14 @@ export class TournamentController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async delete(@Req() req: any, @Param('id') id: string) {
     return this.tournamentService.delete(id, req.user.userId);
   }
 
-  // Player management
+  // Player management - all require auth
   @Post(':id/players')
+  @UseGuards(JwtAuthGuard)
   async addPlayer(
     @Req() req: any,
     @Param('id') tournamentId: string,
@@ -75,6 +91,7 @@ export class TournamentController {
   }
 
   @Delete(':id/players/:playerId')
+  @UseGuards(JwtAuthGuard)
   async removePlayer(
     @Req() req: any,
     @Param('id') tournamentId: string,
@@ -84,6 +101,7 @@ export class TournamentController {
   }
 
   @Post(':id/players/:playerId/withdraw')
+  @UseGuards(JwtAuthGuard)
   async withdrawPlayer(
     @Param('id') tournamentId: string,
     @Param('playerId') playerId: string,
@@ -92,8 +110,9 @@ export class TournamentController {
     return this.tournamentService.withdrawPlayer(tournamentId, playerId, body.roundNumber);
   }
 
-  // Round management
+  // Round management - all require auth
   @Post(':id/rounds')
+  @UseGuards(JwtAuthGuard)
   async createRound(
     @Param('id') tournamentId: string,
     @Body() body: { roundNumber: number; name?: string },
@@ -105,6 +124,7 @@ export class TournamentController {
   }
 
   @Post(':id/rounds/:roundId/publish')
+  @UseGuards(JwtAuthGuard)
   async publishRound(
     @Param('id') tournamentId: string,
     @Param('roundId') roundId: string,
@@ -113,12 +133,14 @@ export class TournamentController {
   }
 
   @Post(':id/rounds/:roundId/complete')
+  @UseGuards(JwtAuthGuard)
   async completeRound(@Param('roundId') roundId: string) {
     return this.tournamentService.completeRound(roundId);
   }
 
-  // Pairing management
+  // Pairing management - all require auth
   @Post(':id/pairings')
+  @UseGuards(JwtAuthGuard)
   async createPairing(
     @Param('id') tournamentId: string,
     @Body() body: { roundId: string; whiteId: string; blackId: string; boardNumber?: number },
@@ -135,6 +157,7 @@ export class TournamentController {
   }
 
   @Post(':id/results')
+  @UseGuards(JwtAuthGuard)
   async submitResult(
     @Param('id') tournamentId: string,
     @Body() body: { pairingId: string; result: string },
