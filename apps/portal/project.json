@@ -21,7 +21,12 @@
             "input": "apps/portal/public"
           }
         ],
-        "styles": ["apps/portal/src/styles.scss"]
+        "styles": ["apps/portal/src/styles.scss"],
+        "server": "apps/portal/src/main.server.ts",
+        "ssr": {
+          "entry": "apps/portal/src/server.ts"
+        },
+        "outputMode": "server"
       },
       "configurations": {
         "production": {
@@ -64,15 +69,18 @@
       "executor": "@nx/eslint:lint"
     },
     "test": {
-      "executor": "@angular/build:unit-test",
-      "options": {}
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../coverage/apps/portal"
+      }
     },
     "serve-static": {
       "continuous": true,
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "portal:build",
-        "port": 4200,
+        "port": 8050,
         "staticFilePath": "dist/apps/portal/browser",
         "spa": true
       }
