@@ -1,11 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { TitleCasePipe } from '@angular/common';
 import {
   FieldTree,
   form,
   FormField,
-  FormRoot, minLength,
+  FormRoot,
+  minLength,
   required,
   TreeValidationResult,
 } from '@angular/forms/signals';
@@ -14,13 +16,21 @@ import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { injectBackendUrl } from '@chessops/core/providers';
-import { JsonPipe } from '@angular/common';
 
 interface RegisterModel {
   email: string;
   password: string;
   displayName: string;
 }
+
+interface PasswordRequirement {
+  id: string;
+  label: string;
+  pattern: RegExp;
+  satisfied: boolean;
+}
+
+type PasswordStrength = 'weak' | 'medium' | 'strong';
 
 @Component({
   selector: 'app-register-page',
@@ -31,7 +41,7 @@ interface RegisterModel {
     InputComponent,
     ButtonComponent,
     CardComponent,
-    JsonPipe,
+    TitleCasePipe,
   ],
   template: `
     <div
@@ -127,20 +137,47 @@ interface RegisterModel {
                   autocomplete="new-password"
                 />
 
-                <!-- Password requirements -->
+                <!-- Password strength indicator -->
                 <div
-                  class="bg-surface-elevated rounded-md p-3 border border-border"
+                  class="bg-surface-elevated rounded-md p-4 border border-border"
                 >
-                  <p class="text-xs font-medium text-muted mb-2">
-                    Password must contain:
-                  </p>
-                  <ul class="text-xs text-muted space-y-1">
-                    <li class="flex items-center gap-2">
-                      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
-                      At least 8 characters
-                      >>{{ registerForm.password().errors() | json }}<<
-                    </li>
-                  </ul>
+                  <!-- Strength meter -->
+                  <div class="mb-3">
+                    <div class="flex items-center justify-between mb-1.5">
+                      <span class="text-xs font-medium text-muted font-body">Password strength</span>
+                      <span
+                        class="text-xs font-bold font-display"
+                        [class]="strengthColor()"
+                      >
+                        {{ passwordStrength() | titlecase }}
+                      </span>
+                    </div>
+                    <div class="flex gap-1">
+                      @for (bar of barStates(); track $index) {
+                        <div
+                          class="h-1.5 flex-1 rounded-full transition-all duration-300"
+                          [class]="getBarColor($index)"
+                        ></div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Requirements list -->
+                  <div class="space-y-1.5">
+                    @for (req of passwordRequirements(); track req.id) {
+                      <div class="flex items-center gap-2">
+                        @if (req.satisfied) {
+                          <svg class="w-4 h-4 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span class="text-xs text-success font-body">{{ req.label }}</span>
+                        } @else {
+                          <span class="w-4 h-4 rounded-full border-2 border-muted/40 flex-shrink-0"></span>
+                          <span class="text-xs text-muted font-body">{{ req.label }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
 
                 @if (registerForm().errors().length > 0) {
@@ -215,6 +252,52 @@ export class RegisterPageComponent {
     password: '',
     displayName: '',
   });
+
+  passwordRequirements = computed<PasswordRequirement[]>(() => {
+    const password = this.registerFormValue().password;
+    return [
+      { id: 'length', label: 'At least 8 characters', pattern: /^.{8,}$/, satisfied: password.length >= 8 },
+      { id: 'uppercase', label: 'One uppercase letter', pattern: /[A-Z]/, satisfied: /[A-Z]/.test(password) },
+      { id: 'lowercase', label: 'One lowercase letter', pattern: /[a-z]/, satisfied: /[a-z]/.test(password) },
+      { id: 'number', label: 'One number', pattern: /[0-9]/, satisfied: /[0-9]/.test(password) },
+      { id: 'special', label: 'One special character', pattern: /[!@#$%^&*(),.?":{}|<>]/, satisfied: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
+    ];
+  });
+
+  satisfiedCount = computed(() => {
+    return this.passwordRequirements().filter(r => r.satisfied).length;
+  });
+
+  passwordStrength = computed<PasswordStrength>(() => {
+    const count = this.satisfiedCount();
+    if (count <= 2) return 'weak';
+    if (count <= 4) return 'medium';
+    return 'strong';
+  });
+
+  strengthColor = computed(() => {
+    const strength = this.passwordStrength();
+    if (strength === 'weak') return 'text-error';
+    if (strength === 'medium') return 'text-warning';
+    return 'text-success';
+  });
+
+  barStates = computed(() => {
+    const strength = this.passwordStrength();
+    return [
+      { filled: true, active: true },
+      { filled: strength !== 'weak', active: strength !== 'weak' },
+      { filled: strength === 'strong', active: strength === 'strong' },
+    ];
+  });
+
+  getBarColor = (index: number): string => {
+    const state = this.barStates()[index];
+    if (!state.filled) return 'bg-border';
+    if (index === 0) return 'bg-error';
+    if (index === 1) return 'bg-warning';
+    return 'bg-success';
+  };
 
   submitForm = async (field: FieldTree<RegisterModel>) => {
     try {
