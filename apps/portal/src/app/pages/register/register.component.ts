@@ -32,69 +32,130 @@ interface RegisterModel {
     CardComponent,
   ],
   template: `
-    <div
-      class="min-h-screen flex items-center justify-center bg-surface py-12 px-4 sm:px-6 lg:px-8"
-    >
-      <div class="max-w-md w-full">
-        <chessops-card variant="default" [header]="true" title="">
-          <p class="text-center">Create your account</p>
-          <p class="text-center text-sm text-muted mb-6">
-            Or
+    <div class="min-h-screen flex bg-gradient-to-br from-surface via-background to-surface-elevated">
+      <!-- Left side - Decorative chess pattern -->
+      <div class="hidden lg:flex lg:w-1/2 relative bg-secondary overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+          <!-- Chess board pattern -->
+          <div class="grid grid-cols-8 grid-rows-8 w-full h-full">
+            @for (row of [0,1,2,3,4,5,6,7]; track row) {
+              @for (col of [0,1,2,3,4,5,6,7]; track col) {
+                <div
+                  class="w-full h-full"
+                  [class.bg-surface]="(row + col) % 2 === 0"
+                  [class.bg-secondary]="(row + col) % 2 === 1"
+                ></div>
+              }
+            }
+          </div>
+        </div>
+        <!-- Decorative queen icon placeholder -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="text-center">
+            <div class="text-9xl mb-8">♛</div>
+            <h1 class="text-5xl font-display font-bold text-surface mb-4">ChessOps</h1>
+            <p class="text-xl text-surface/80 font-body">Join the Community</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side - Register form -->
+      <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12">
+        <div class="w-full max-w-md">
+          <!-- Logo for mobile -->
+          <div class="lg:hidden text-center mb-8">
+            <div class="text-6xl mb-2">♔</div>
+            <h1 class="text-3xl font-display font-bold text-primary">ChessOps</h1>
+          </div>
+
+          <!-- Welcome text -->
+          <div class="mb-8">
+            <h2 class="text-3xl font-display font-bold text-primary mb-2">Create your account</h2>
+            <p class="text-muted font-body">Start your chess journey with us today</p>
+          </div>
+
+          <chessops-card variant="outlined" [header]="false" class="shadow-lg">
+            <form [formRoot]="registerForm">
+              <div class="flex flex-col gap-5">
+                <chessops-input
+                  id="displayName"
+                  type="text"
+                  label="Display Name"
+                  placeholder="Choose a display name"
+                  [formField]="registerForm.displayName"
+                  size="lg"
+                />
+
+                <chessops-input
+                  id="email"
+                  type="email"
+                  label="Email address"
+                  placeholder="you@example.com"
+                  [formField]="registerForm.email"
+                  size="lg"
+                />
+
+                <chessops-input
+                  id="password"
+                  type="password"
+                  label="Password"
+                  placeholder="Minimum 8 characters"
+                  [formField]="registerForm.password"
+                  size="lg"
+                  autocomplete="new-password"
+                />
+
+                <!-- Password requirements -->
+                <div class="bg-surface-elevated rounded-md p-3 border border-border">
+                  <p class="text-xs font-medium text-muted mb-2">Password must contain:</p>
+                  <ul class="text-xs text-muted space-y-1">
+                    <li class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+                      At least 8 characters
+                    </li>
+                  </ul>
+                </div>
+
+                @if (registerForm().errors().length > 0) {
+                  <div class="bg-error-light border border-error/20 rounded-md p-3 text-center">
+                    <span class="text-error text-sm font-medium">{{ registerForm().errors()[0]?.message }}</span>
+                  </div>
+                }
+
+                <chessops-button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  [disabled]="registerForm().submitting() || registerForm().invalid()"
+                  [fullWidth]="true"
+                >
+                  @if (registerForm().submitting()) {
+                    <span class="flex items-center gap-2">
+                      <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                      </svg>
+                      Creating account...
+                    </span>
+                  } @else {
+                    <span>Create account</span>
+                  }
+                </chessops-button>
+              </div>
+            </form>
+          </chessops-card>
+
+          <!-- Sign in link -->
+          <p class="text-center mt-8 text-muted font-body">
+            Already have an account?
             <a
               routerLink="/login"
-              class="font-medium text-primary hover:text-primary/80"
-              >sign in to existing account</a
+              class="font-medium text-primary hover:text-primary/80 transition-colors"
             >
+              Sign in to existing account
+            </a>
           </p>
-
-          <form [formRoot]="registerForm">
-            <div class="flex gap-4 flex-col">
-              <chessops-input
-                id="displayName"
-                type="text"
-                label="Display Name"
-                placeholder="Your name"
-                [formField]="registerForm.displayName"
-              />
-
-              <chessops-input
-                id="email"
-                type="email"
-                label="Email address"
-                placeholder="you@example.com"
-                [formField]="registerForm.email"
-              />
-
-              <chessops-input
-                id="password"
-                type="password"
-                label="Password"
-                placeholder="Minimum 8 characters"
-                [formField]="registerForm.password"
-              />
-
-              @if (registerForm().errors().length > 0) {
-                <div class="text-error text-sm text-center">
-                  {{ registerForm().errors()[0]?.message }}
-                </div>
-              }
-
-              <chessops-button
-                type="submit"
-                variant="primary"
-                size="md"
-                [disabled]="registerForm().submitting()"
-                [fullWidth]="true"
-              >
-                @if (registerForm().submitting()) {
-                  <span>Creating account...</span>
-                } @else {
-                  <span>Create account</span>
-                }
-              </chessops-button>
-            </div>
-          </form>
-        </chessops-card>
+        </div>
       </div>
     </div>
   `,
@@ -125,6 +186,14 @@ export class RegisterPageComponent {
       }
       return undefined as TreeValidationResult;
     } catch (err: any) {
+      if (/email/.test(err.error?.message?.toLowerCase())) {
+        return {
+          fieldTree: field.email,
+          kind: 'server',
+          message: err.error?.message || 'Registration failed',
+        } as TreeValidationResult;
+      }
+
       return {
         kind: 'server',
         message: err.error?.message || 'Registration failed',

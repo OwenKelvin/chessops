@@ -49,6 +49,7 @@ export type InputSize = InputVariants['size'];
         [value]="value() ?? ''"
         (input)="handleInput($event)"
         (blur)="handleBlur()"
+        [autocomplete]="autocomplete()"
       />
 
       @if (errors().length > 0) {
@@ -61,7 +62,9 @@ export type InputSize = InputVariants['size'];
     </div>
   `,
 })
-export class InputComponent implements FormValueControl<string | number | null> {
+export class InputComponent
+  implements FormValueControl<string | number | null>
+{
   // --- FormValueControl Implementation ---
   // The 'value' is now a model signal that handles 2-way syncing automatically
   readonly value = model<string | number | null>(null);
@@ -74,6 +77,7 @@ export class InputComponent implements FormValueControl<string | number | null> 
   readonly max = input<number | undefined>(undefined);
   readonly minLength = input<number | undefined>(undefined);
   readonly maxLength = input<number | undefined>(undefined);
+  readonly autocomplete = input<string>();
 
   // --- UI Props ---
   readonly id = input<string>(
