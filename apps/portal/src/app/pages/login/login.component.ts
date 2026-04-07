@@ -13,11 +13,13 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { CheckboxComponent } from '@chessops/ui/checkbox';
 import { injectBackendUrl } from '@chessops/core/providers';
 
 interface LoginModel {
   email: string;
   password: string;
+  rememberMe: boolean;
 }
 
 @Component({
@@ -29,6 +31,7 @@ interface LoginModel {
     InputComponent,
     ButtonComponent,
     CardComponent,
+    CheckboxComponent,
   ],
   template: `
     <div class="min-h-screen flex bg-gradient-to-br from-surface via-background to-surface-elevated">
@@ -48,10 +51,10 @@ interface LoginModel {
             }
           </div>
         </div>
-        <!-- Decorative knight icon placeholder -->
+        <!-- Decorative logo placeholder -->
         <div class="absolute inset-0 flex items-center justify-center">
           <div class="text-center">
-            <div class="text-9xl mb-8">♘</div>
+            <img src="logo.svg" alt="ChessOps" class="mx-auto h-32 w-auto mb-8 opacity-90" />
             <h1 class="text-5xl font-display font-bold text-surface mb-4">ChessOps</h1>
             <p class="text-xl text-surface/80 font-body">Master Your Game</p>
           </div>
@@ -63,7 +66,7 @@ interface LoginModel {
         <div class="w-full max-w-md">
           <!-- Logo for mobile -->
           <div class="lg:hidden text-center mb-8">
-            <div class="text-6xl mb-2">♘</div>
+            <img src="logo.svg" alt="ChessOps" class="mx-auto h-16 w-auto mb-2" />
             <h1 class="text-3xl font-display font-bold text-primary">ChessOps</h1>
           </div>
 
@@ -94,13 +97,11 @@ interface LoginModel {
               />
 
               <div class="flex items-center justify-between">
-                <label class="flex items-center gap-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    class="w-4 h-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
-                  />
-                  <span class="text-sm text-muted font-body group-hover:text-primary transition-colors">Remember me</span>
-                </label>
+                <chessops-checkbox
+                  id="rememberMe"
+                  label="Remember me"
+                  [formField]="loginForm.rememberMe"
+                />
                 <a
                   routerLink="/forgot-password"
                   class="text-sm font-medium text-primary hover:text-primary/80 font-body transition-colors"
@@ -192,7 +193,7 @@ export class LoginPageComponent {
   private router = inject(Router);
   private backendUrl = injectBackendUrl()
 
-  loginFormValue = signal<LoginModel>({ email: '', password: '' });
+  loginFormValue = signal<LoginModel>({ email: '', password: '', rememberMe: false });
 
   submitForm = async (field: FieldTree<LoginModel>) => {
     try {
@@ -200,6 +201,7 @@ export class LoginPageComponent {
         this.http.post(`${this.backendUrl}/api/auth/login`, {
           email: field.email().value(),
           password: field.password().value(),
+          rememberMe: field.rememberMe().value(),
         }),
       );
       if (result) {

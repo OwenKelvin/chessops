@@ -29,6 +29,18 @@
   }
 }
 
+.logo-icon {
+  width: 32px;
+  height: auto;
+  display: block;
+}
+
+/* Ensure logo SVG uses theme colors */
+.logo-icon :deep(.queen-crown),
+.logo-icon :deep(.pawn-body) {
+  transition: fill 0.2s ease;
+}
+
 .header-nav {
   display: flex;
   align-items: center;

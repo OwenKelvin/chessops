@@ -52,7 +52,7 @@ export type InputSize = InputVariants['size'];
         [autocomplete]="autocomplete()"
       />
 
-      @if (errors().length > 0) {
+      @if (errors().length > 0 && touched()) {
         <span
           class="text-xs font-medium text-error animate-in fade-in slide-in-from-top-1"
         >

@@ -5,7 +5,7 @@ import {
   FieldTree,
   form,
   FormField,
-  FormRoot,
+  FormRoot, minLength,
   required,
   TreeValidationResult,
 } from '@angular/forms/signals';
@@ -14,6 +14,7 @@ import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { JsonPipe } from '@angular/common';
 
 interface RegisterModel {
   email: string;
@@ -30,16 +31,21 @@ interface RegisterModel {
     InputComponent,
     ButtonComponent,
     CardComponent,
+    JsonPipe,
   ],
   template: `
-    <div class="min-h-screen flex bg-gradient-to-br from-surface via-background to-surface-elevated">
+    <div
+      class="min-h-screen flex bg-gradient-to-br from-surface via-background to-surface-elevated"
+    >
       <!-- Left side - Decorative chess pattern -->
-      <div class="hidden lg:flex lg:w-1/2 relative bg-secondary overflow-hidden">
+      <div
+        class="hidden lg:flex lg:w-1/2 relative bg-secondary overflow-hidden"
+      >
         <div class="absolute inset-0 opacity-10">
           <!-- Chess board pattern -->
           <div class="grid grid-cols-8 grid-rows-8 w-full h-full">
-            @for (row of [0,1,2,3,4,5,6,7]; track row) {
-              @for (col of [0,1,2,3,4,5,6,7]; track col) {
+            @for (row of [0, 1, 2, 3, 4, 5, 6, 7]; track row) {
+              @for (col of [0, 1, 2, 3, 4, 5, 6, 7]; track col) {
                 <div
                   class="w-full h-full"
                   [class.bg-surface]="(row + col) % 2 === 0"
@@ -49,11 +55,17 @@ interface RegisterModel {
             }
           </div>
         </div>
-        <!-- Decorative queen icon placeholder -->
+        <!-- Decorative logo placeholder -->
         <div class="absolute inset-0 flex items-center justify-center">
           <div class="text-center">
-            <div class="text-9xl mb-8">♛</div>
-            <h1 class="text-5xl font-display font-bold text-surface mb-4">ChessOps</h1>
+            <img
+              src="logo.svg"
+              alt="ChessOps"
+              class="mx-auto h-32 w-auto mb-8 opacity-90"
+            />
+            <h1 class="text-5xl font-display font-bold text-surface mb-4">
+              ChessOps
+            </h1>
             <p class="text-xl text-surface/80 font-body">Join the Community</p>
           </div>
         </div>
@@ -64,14 +76,24 @@ interface RegisterModel {
         <div class="w-full max-w-md">
           <!-- Logo for mobile -->
           <div class="lg:hidden text-center mb-8">
-            <div class="text-6xl mb-2">♔</div>
-            <h1 class="text-3xl font-display font-bold text-primary">ChessOps</h1>
+            <img
+              src="logo.svg"
+              alt="ChessOps"
+              class="mx-auto h-16 w-auto mb-2"
+            />
+            <h1 class="text-3xl font-display font-bold text-primary">
+              ChessOps
+            </h1>
           </div>
 
           <!-- Welcome text -->
           <div class="mb-8">
-            <h2 class="text-3xl font-display font-bold text-primary mb-2">Create your account</h2>
-            <p class="text-muted font-body">Start your chess journey with us today</p>
+            <h2 class="text-3xl font-display font-bold text-primary mb-2">
+              Create your account
+            </h2>
+            <p class="text-muted font-body">
+              Start your chess journey with us today
+            </p>
           </div>
 
           <chessops-card variant="outlined" [header]="false" class="shadow-lg">
@@ -106,19 +128,28 @@ interface RegisterModel {
                 />
 
                 <!-- Password requirements -->
-                <div class="bg-surface-elevated rounded-md p-3 border border-border">
-                  <p class="text-xs font-medium text-muted mb-2">Password must contain:</p>
+                <div
+                  class="bg-surface-elevated rounded-md p-3 border border-border"
+                >
+                  <p class="text-xs font-medium text-muted mb-2">
+                    Password must contain:
+                  </p>
                   <ul class="text-xs text-muted space-y-1">
                     <li class="flex items-center gap-2">
                       <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
                       At least 8 characters
+                      >>{{ registerForm.password().errors() | json }}<<
                     </li>
                   </ul>
                 </div>
 
                 @if (registerForm().errors().length > 0) {
-                  <div class="bg-error-light border border-error/20 rounded-md p-3 text-center">
-                    <span class="text-error text-sm font-medium">{{ registerForm().errors()[0]?.message }}</span>
+                  <div
+                    class="bg-error-light border border-error/20 rounded-md p-3 text-center"
+                  >
+                    <span class="text-error text-sm font-medium">{{
+                      registerForm().errors()[0]?.message
+                    }}</span>
                   </div>
                 }
 
@@ -126,14 +157,28 @@ interface RegisterModel {
                   type="submit"
                   variant="primary"
                   size="lg"
-                  [disabled]="registerForm().submitting() || registerForm().invalid()"
+                  [disabled]="
+                    registerForm().submitting() || registerForm().invalid()
+                  "
                   [fullWidth]="true"
                 >
                   @if (registerForm().submitting()) {
                     <span class="flex items-center gap-2">
                       <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                          fill="none"
+                        />
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
                       </svg>
                       Creating account...
                     </span>
@@ -163,7 +208,7 @@ interface RegisterModel {
 export class RegisterPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
-  backendUrl = injectBackendUrl()
+  backendUrl = injectBackendUrl();
 
   registerFormValue = signal<RegisterModel>({
     email: '',
@@ -207,6 +252,7 @@ export class RegisterPageComponent {
       required(form.displayName, { message: 'Name is required' });
       required(form.email, { message: 'Email is required' });
       required(form.password, { message: 'Password is required' });
+      minLength(form.password, 8, { message: 'Password must contain at least 8 characters '});
     },
     {
       submission: {

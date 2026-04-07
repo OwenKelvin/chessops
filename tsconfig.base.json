@@ -19,6 +19,7 @@
       "@chessops/ui/input": ["libs/ui/input/src/index.ts"],
       "@chessops/ui/table": ["libs/ui/table/src/index.ts"],
       "@chessops/ui/button": ["libs/ui/button/src/index.ts"],
+      "@chessops/ui/checkbox": ["libs/ui/checkbox/src/index.ts"],
       "@chessops/ui/card": ["libs/ui/card/src/index.ts"],
       "@chessops/ui/code-block": ["libs/ui/code-block/src/index.ts"],
       "@chessops/ui/select": ["libs/ui/select/src/index.ts"],
