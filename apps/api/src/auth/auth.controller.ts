@@ -70,8 +70,10 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Res({ passthrough: false }) res: Response) {
     const result = await this.authService.register(dto);
     this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    // Send verification email
-    await this.authService.requestEmailVerification(dto.email);
+    // Queue verification email (non-blocking, won't delay response)
+    this.authService.requestEmailVerification(dto.email).catch(err => {
+      console.error('Failed to queue verification email:', err);
+    });
     return { user: result.user };
   }
 

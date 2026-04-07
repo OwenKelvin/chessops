@@ -113,7 +113,7 @@ export class RegisterPageComponent {
   submitForm = async (field: FieldTree<RegisterModel>) => {
     try {
       const result = await firstValueFrom(
-        this.http.post(`${this.backendUrl}/api/auth/register`, {
+        this.http.post(`api/auth/register`, {
           email: field.email().value(),
           password: field.password().value(),
           displayName: field.displayName().value(),

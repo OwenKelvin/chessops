@@ -16,6 +16,7 @@ import { PairingModule } from '../pairing/pairing.module';
 import { TiebreakModule } from '../tiebreak/tiebreak.module';
 import { ExportModule } from '../export/export.module';
 import { ImportModule } from '../import/import.module';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ImportModule } from '../import/import.module';
     TiebreakModule,
     ExportModule,
     ImportModule,
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [AppService],

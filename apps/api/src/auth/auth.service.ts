@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from '../mail/mail.service';
+import { MailQueueService } from '../queue/mail-queue.service';
 import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -28,7 +28,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private mailService: MailService,
+    private mailQueueService: MailQueueService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -392,13 +392,13 @@ export class AuthService {
       },
     });
 
-    // Send verification email
+    // Queue verification email
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4200'}/verify-email?token=${token}`;
-    await this.mailService.sendMail(
-      email,
-      'Verify your email - ChessOps',
-      `<p>Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
-    );
+    await this.mailQueueService.addMailJob({
+      to: email,
+      subject: 'Verify your email - ChessOps',
+      html: `<p>Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
+    });
 
     return { success: true };
   }
