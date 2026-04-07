@@ -195,11 +195,6 @@ export class AccountPageComponent implements OnInit {
             currentPassword: field.currentPassword().value(),
             newPassword: field.newPassword().value(),
           },
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-          },
         ),
       );
       this.passwordMessage.set('Password updated successfully');
@@ -247,10 +242,9 @@ export class AccountPageComponent implements OnInit {
   }
 
   loadUser() {
-    const token = localStorage.getItem('accessToken');
     this.http
       .get(`${this.backendUrl}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       })
       .subscribe({
         next: (response: any) => this.user.set(response),
@@ -259,10 +253,9 @@ export class AccountPageComponent implements OnInit {
   }
 
   checkMfaStatus() {
-    const token = localStorage.getItem('accessToken');
     this.http
       .get(`${this.backendUrl}/api/mfa/status`, {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       })
       .subscribe({
         next: (response: any) => this.mfaEnabled.set(response.enabled),
@@ -275,7 +268,6 @@ export class AccountPageComponent implements OnInit {
   }
 
   disableMfa() {
-    const token = localStorage.getItem('accessToken');
     const code = prompt('Enter your 6-digit MFA code to disable:');
     if (!code) return;
 
@@ -283,9 +275,6 @@ export class AccountPageComponent implements OnInit {
       .post(
         `${this.backendUrl}/api/mfa/disable`,
         { token: code },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
       )
       .subscribe({
         next: () => {
@@ -310,14 +299,11 @@ export class AccountPageComponent implements OnInit {
         `${this.backendUrl}/api/auth/revoke-sessions`,
         {},
         {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
+          withCredentials: true,
         },
       )
       .subscribe({
         next: () => {
-          localStorage.clear();
           this.router.navigate(['/login']);
         },
         error: () => {
@@ -329,16 +315,14 @@ export class AccountPageComponent implements OnInit {
 
   logout() {
     this.http
-      .post(`${this.backendUrl}/api/auth/logout`, {
-        refreshToken: localStorage.getItem('refreshToken'),
+      .post(`${this.backendUrl}/api/auth/logout`, {}, {
+        withCredentials: true,
       })
       .subscribe({
         next: () => {
-          localStorage.clear();
           this.router.navigate(['/login']);
         },
         error: () => {
-          localStorage.clear();
           this.router.navigate(['/login']);
         },
       });

@@ -151,7 +151,6 @@ export class MfaSetupPageComponent {
 
   submitForm = async (field: FieldTree<MfaVerifyModel>) => {
     try {
-      const token = localStorage.getItem('accessToken');
       const result = await firstValueFrom(
         this.http.post(
           `${this.backendUrl}/api/mfa/enable`,
@@ -159,7 +158,7 @@ export class MfaSetupPageComponent {
             token: field.token().value(),
           },
           {
-            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
           },
         ),
       );
@@ -200,10 +199,9 @@ export class MfaSetupPageComponent {
   }
 
   loadMfaSetup() {
-    const token = localStorage.getItem('accessToken');
     this.http
       .get(`${this.backendUrl}/api/mfa/setup`, {
-        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
       })
       .subscribe({
         next: (response: any) => {

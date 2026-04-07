@@ -143,8 +143,7 @@ export class LoginPageComponent {
         }),
       );
       if (result) {
-        localStorage.setItem('accessToken', (result as any).accessToken);
-        localStorage.setItem('refreshToken', (result as any).refreshToken);
+        // Cookies are set by the server, just navigate to account page
         this.router.navigate(['/account']);
       }
       return undefined as TreeValidationResult;

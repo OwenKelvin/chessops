@@ -1,18 +1,30 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Get, Req, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Get,
+  Req,
+  Patch,
+  Delete,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { VerifyEmailDto, ResendVerificationDto } from './dto/verify-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { IsOptional, IsString } from 'class-validator';
 
 class ChangePasswordDto {
   currentPassword: string;
   newPassword: string;
 }
-
-import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -28,13 +40,39 @@ export class UpdateProfileDto {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+    // Access token - short lived (15 min), HttpOnly, Secure in production
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      path: '/',
+    });
+
+    // Refresh token - longer lived (7 days), HttpOnly, Secure in production
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
+    });
+  }
+
+  private clearAuthCookies(res: Response) {
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/' });
+  }
+
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() dto: RegisterDto) {
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: false }) res: Response) {
     const result = await this.authService.register(dto);
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
     // Send verification email
     await this.authService.requestEmailVerification(dto.email);
-    return result;
+    return { user: result.user };
   }
 
   @Post('verify-email')
@@ -51,15 +89,21 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: false }) res: Response) {
+    const result = await this.authService.login(dto);
+    this.setAuthCookies(res, result.accessToken, result.refreshToken);
+    return { user: result.user };
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async logout(@Body() dto: LogoutDto) {
-    await this.authService.logout(dto.refreshToken);
+  async logout(@Req() req: any, @Res({ passthrough: false }) res: Response) {
+    const token = req.cookies?.refreshToken || req.raw?.cookies?.refreshToken;
+    if (token) {
+      await this.authService.logout(token);
+    }
+    this.clearAuthCookies(res);
+    return { success: true };
   }
 
   @Get('me')
@@ -99,9 +143,14 @@ export class AuthController {
 
   @Post('token/refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Body() dto: RefreshTokenDto) {
-    const tokens = await this.authService.refreshTokens(dto.refreshToken);
-    return tokens;
+  async refreshToken(@Req() req: any, @Res({ passthrough: false }) res: Response) {
+    const token = req.cookies?.refreshToken || req.raw?.cookies?.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException('No refresh token');
+    }
+    const tokens = await this.authService.refreshTokens(token);
+    this.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    return { accessToken: tokens.accessToken };
   }
 
   @Post('token/revoke')
