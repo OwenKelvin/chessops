@@ -6,9 +6,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-// Import from the new official signals entry point
 import { form, FormField, required } from '@angular/forms/signals';
-
 import {
   TournamentService,
   type CreateTournamentDto,
@@ -49,6 +47,7 @@ const COUNTRY_OPTIONS: SelectOption[] = [
   { value: 'IL', label: 'Israel' },
   { value: 'EG', label: 'Egypt' },
   { value: 'ZA', label: 'South Africa' },
+  { value: 'KE', label: 'Kenya' },
   { value: 'MX', label: 'Mexico' },
   { value: 'CL', label: 'Chile' },
   { value: 'CO', label: 'Colombia' },
@@ -64,7 +63,6 @@ const FORMAT_OPTIONS: SelectOption[] = [
 @Component({
   selector: 'chessops-tournament-create',
   standalone: true,
-  // Note: We use FormField directive instead of FormsModule
   imports: [
     CommonModule,
     RouterLink,
@@ -75,34 +73,56 @@ const FORMAT_OPTIONS: SelectOption[] = [
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="create-page">
-      <header class="page-header">
-        <div>
-          <h1>Create Tournament</h1>
-          <p class="subtitle">Set up a new chess tournament</p>
-        </div>
-        <a routerLink="/" class="btn btn-ghost">Cancel</a>
-      </header>
+    <div
+      class="min-h-screen bg-background text-foreground px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8"
+    >
+      <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <header
+          class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8"
+        >
+          <div>
+            <h1
+              class="text-xl sm:text-2xl lg:text-3xl font-display font-bold text-primary mb-1"
+            >
+              Create Tournament
+            </h1>
+            <p class="text-sm sm:text-base text-muted-foreground">
+              Set up a new chess tournament
+            </p>
+          </div>
+          <a
+            routerLink="/"
+            class="w-full sm:w-auto px-4 py-2 text-sm font-semibold text-foreground rounded-lg
+                    hover:bg-surface transition-colors text-center"
+          >
+            Cancel
+          </a>
+        </header>
 
-      <div class="form-container">
-        <chessops-card>
-          <form (submit)="$event.preventDefault(); onSubmit()">
-            <section class="form-section">
-              <h2>Basic Information</h2>
-
+        <chessops-card class="block">
+          <form
+            (submit)="$event.preventDefault(); onSubmit()"
+            class="space-y-6 sm:space-y-8"
+          >
+            <!-- Basic Information -->
+            <section class="space-y-3 sm:space-y-4">
+              <h2
+                class="text-sm sm:text-base font-display font-bold text-primary pb-2 border-b border-border"
+              >
+                Basic Information
+              </h2>
               <chessops-input
                 label="Tournament Name"
                 placeholder="e.g., Spring Championship 2024"
                 [formField]="tournamentForm.name"
               />
-
               <chessops-input
                 label="Description"
                 placeholder="Brief description"
                 [formField]="tournamentForm.description"
               />
-
-              <div class="form-row">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <chessops-select
                   label="Country"
                   [options]="countryOptions"
@@ -115,9 +135,14 @@ const FORMAT_OPTIONS: SelectOption[] = [
               </div>
             </section>
 
-            <section class="form-section">
-              <h2>Dates</h2>
-              <div class="form-row">
+            <!-- Dates -->
+            <section class="space-y-3 sm:space-y-4">
+              <h2
+                class="text-sm sm:text-base font-display font-bold text-primary pb-2 border-b border-border"
+              >
+                Dates
+              </h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <chessops-input
                   label="Start Date"
                   type="date"
@@ -131,14 +156,19 @@ const FORMAT_OPTIONS: SelectOption[] = [
               </div>
             </section>
 
-            <section class="form-section">
-              <h2>Format</h2>
+            <!-- Format -->
+            <section class="space-y-3 sm:space-y-4">
+              <h2
+                class="text-sm sm:text-base font-display font-bold text-primary pb-2 border-b border-border"
+              >
+                Format
+              </h2>
               <chessops-select
                 label="Tournament Format"
                 [options]="formatOptions"
                 [formField]="tournamentForm.format"
               />
-              <div class="form-row">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <chessops-input
                   label="Max Rounds"
                   type="number"
@@ -151,62 +181,108 @@ const FORMAT_OPTIONS: SelectOption[] = [
               </div>
             </section>
 
-            <section class="form-section">
-              <h2>Settings</h2>
-              <div class="form-row">
+            <!-- Settings -->
+            <section class="space-y-3 sm:space-y-4">
+              <h2
+                class="text-sm sm:text-base font-display font-bold text-primary pb-2 border-b border-border"
+              >
+                Settings
+              </h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <chessops-input
                   label="Max Players"
                   type="number"
                   [formField]="tournamentForm.maxPlayers"
                 />
               </div>
-
-              <div class="checkbox-group">
-                <label class="checkbox-label">
+              <div class="flex flex-col gap-2 sm:gap-3 pt-1">
+                <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     [formField]="tournamentForm.isPublic"
+                    class="w-4 h-4 rounded border-border accent-accent cursor-pointer"
                   />
-                  <span>Public tournament</span>
+                  <span class="text-sm font-body text-foreground"
+                    >Public tournament</span
+                  >
                 </label>
-                <label class="checkbox-label">
+                <label class="flex items-center gap-2 sm:gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     [formField]="tournamentForm.registrationOpen"
+                    class="w-4 h-4 rounded border-border accent-accent cursor-pointer"
                   />
-                  <span>Registration open</span>
+                  <span class="text-sm font-body text-foreground"
+                    >Registration open</span
+                  >
                 </label>
               </div>
             </section>
 
-            <div class="form-actions">
+            <!-- Actions -->
+            <div class="flex flex-col gap-2 sm:gap-3 pt-2">
+              @if (error()) {
+                <p class="text-xs sm:text-sm text-error">{{ error() }}</p>
+              }
               <button
                 type="submit"
-                class="btn btn-primary"
                 [disabled]="
                   submitting() ||
                   tournamentForm.name().invalid() ||
                   tournamentForm.startDate().invalid()
                 "
+                class="w-full py-2.5 sm:py-3 px-4 bg-primary hover:bg-primary-hover text-primary-foreground
+                       font-display font-bold rounded-lg transition-colors text-sm sm:text-base
+                       disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {{ submitting() ? 'Creating...' : 'Create Tournament' }}
               </button>
             </div>
-
-            @if (error()) {
-              <div class="error-message">{{ error() }}</div>
-            }
           </form>
         </chessops-card>
       </div>
     </div>
   `,
+  styles: [
+    `
+      /* Additional responsive styles */
+      @media (max-width: 640px) {
+        :host {
+          display: block;
+        }
+
+        input,
+        select,
+        button {
+          font-size: 16px; /* Prevents zoom on mobile devices */
+        }
+      }
+
+      /* Smooth transitions for responsive changes */
+      chessops-card {
+        transition: all 0.2s ease-in-out;
+      }
+
+      /* Improve touch targets on mobile */
+      @media (max-width: 640px) {
+        label,
+        button,
+        a,
+        input[type='checkbox'] {
+          min-height: 44px;
+        }
+
+        input[type='checkbox'] {
+          min-height: auto;
+        }
+      }
+    `,
+  ],
 })
 export class TournamentCreateComponent {
   private tournamentService = inject(TournamentService);
   private router = inject(Router);
 
-  // 1. Create the data model signal
   protected tournamentModel = signal<CreateTournamentDto>({
     name: '',
     description: '',
@@ -220,11 +296,9 @@ export class TournamentCreateComponent {
     maxPlayers: null,
     isPublic: true,
     registrationOpen: true,
-    countryName: ''
+    countryName: '',
   });
 
-  // 2. Create the FieldTree using form()
-  // You can pass a schema function as the second argument for validation
   protected tournamentForm = form(this.tournamentModel, (schema) => {
     required(schema.name);
     required(schema.startDate);
@@ -236,7 +310,6 @@ export class TournamentCreateComponent {
   protected error = signal('');
 
   async onSubmit(): Promise<void> {
-    // Check validation via field state signals
     if (
       this.tournamentForm.name().invalid() ||
       this.tournamentForm.startDate().invalid()
@@ -249,9 +322,7 @@ export class TournamentCreateComponent {
     this.error.set('');
 
     try {
-      // 3. Access current values directly from the model signal
       const currentData = this.tournamentModel();
-
       const countryOption = COUNTRY_OPTIONS.find(
         (o) => o.value === currentData.country,
       );
@@ -259,7 +330,6 @@ export class TournamentCreateComponent {
         ...currentData,
         countryName: countryOption?.label || '',
       };
-
       const tournament = await this.tournamentService.createTournament(data);
       this.router.navigate(['/tournaments', tournament.id]);
     } catch (e) {
