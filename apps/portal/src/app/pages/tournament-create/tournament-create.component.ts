@@ -2,11 +2,17 @@ import {
   Component,
   inject,
   signal,
-  ChangeDetectionStrategy,
+  ChangeDetectionStrategy, computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { form, FormField, required } from '@angular/forms/signals';
+import {
+  FieldTree,
+  form,
+  FormField,
+  FormRoot,
+  required,
+} from '@angular/forms/signals';
 import {
   TournamentService,
   type CreateTournamentDto,
@@ -70,6 +76,7 @@ const FORMAT_OPTIONS: SelectOption[] = [
     InputComponent,
     SelectComponent,
     CardComponent,
+    FormRoot,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -101,10 +108,7 @@ const FORMAT_OPTIONS: SelectOption[] = [
         </header>
 
         <chessops-card class="block">
-          <form
-            (submit)="$event.preventDefault(); onSubmit()"
-            class="space-y-6 sm:space-y-8"
-          >
+          <form [formRoot]="tournamentForm" class="space-y-6 sm:space-y-8">
             <!-- Basic Information -->
             <section class="space-y-3 sm:space-y-4">
               <h2
@@ -299,43 +303,35 @@ export class TournamentCreateComponent {
     countryName: '',
   });
 
-  protected tournamentForm = form(this.tournamentModel, (schema) => {
-    required(schema.name);
-    required(schema.startDate);
-  });
+  submitCreateTournament = async (fieldTree: FieldTree<CreateTournamentDto>) => {
+    const currentData = fieldTree().value();
+    const countryOption = COUNTRY_OPTIONS.find(
+      (o) => o.value === currentData.country,
+    );
+    const data: CreateTournamentDto = {
+      ...currentData,
+      countryName: countryOption?.label || '',
+    };
+    const tournament = await this.tournamentService.createTournament(data);
+
+    return undefined;
+  };
+
+  protected tournamentForm = form(
+    this.tournamentModel,
+    (schema) => {
+      required(schema.name);
+      required(schema.startDate);
+    },
+    {
+      submission: {
+        action: this.submitCreateTournament,
+      },
+    },
+  );
 
   protected countryOptions = COUNTRY_OPTIONS;
   protected formatOptions = FORMAT_OPTIONS;
-  protected submitting = signal(false);
+  protected submitting = computed(() => this.tournamentForm().submitting());
   protected error = signal('');
-
-  async onSubmit(): Promise<void> {
-    if (
-      this.tournamentForm.name().invalid() ||
-      this.tournamentForm.startDate().invalid()
-    ) {
-      this.error.set('Please fill in required fields');
-      return;
-    }
-
-    this.submitting.set(true);
-    this.error.set('');
-
-    try {
-      const currentData = this.tournamentModel();
-      const countryOption = COUNTRY_OPTIONS.find(
-        (o) => o.value === currentData.country,
-      );
-      const data: CreateTournamentDto = {
-        ...currentData,
-        countryName: countryOption?.label || '',
-      };
-      const tournament = await this.tournamentService.createTournament(data);
-      this.router.navigate(['/tournaments', tournament.id]);
-    } catch (e) {
-      this.error.set('Failed to create tournament.');
-    } finally {
-      this.submitting.set(false);
-    }
-  }
 }
