@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TitleCasePipe } from '@angular/common';
@@ -15,12 +15,14 @@ import { firstValueFrom } from 'rxjs';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
+import { SelectComponent, type SelectOption } from '@chessops/ui/select';
 import { injectBackendUrl } from '@chessops/core/providers';
 
 interface RegisterModel {
   email: string;
   password: string;
   displayName: string;
+  countryCode: string;
 }
 
 interface PasswordRequirement {
@@ -32,6 +34,14 @@ interface PasswordRequirement {
 
 type PasswordStrength = 'weak' | 'medium' | 'strong';
 
+interface Country {
+  id: string;
+  name: string;
+  code: string;
+  dialCode?: string;
+  flagEmoji?: string;
+}
+
 @Component({
   selector: 'app-register-page',
   imports: [
@@ -41,6 +51,7 @@ type PasswordStrength = 'weak' | 'medium' | 'strong';
     InputComponent,
     ButtonComponent,
     CardComponent,
+    SelectComponent,
     TitleCasePipe,
   ],
   template: `
@@ -135,6 +146,15 @@ type PasswordStrength = 'weak' | 'medium' | 'strong';
                   [formField]="registerForm.password"
                   size="lg"
                   autocomplete="new-password"
+                />
+
+                <!-- Country selection -->
+                <chessops-select
+                  label="Country"
+                  placeholder="Select your country"
+                  [options]="countryOptions()"
+                  [formField]="registerForm.countryCode"
+                  [fullWidth]="true"
                 />
 
                 <!-- Password strength indicator -->
@@ -247,10 +267,39 @@ export class RegisterPageComponent {
   private router = inject(Router);
   backendUrl = injectBackendUrl();
 
+  countries = signal<Country[]>([]);
+  isLoadingCountries = signal(true);
+
+  constructor() {
+    // Fetch countries on component initialization
+    this.loadCountries();
+  }
+
+  loadCountries() {
+    this.http.get<Country[]>(`${this.backendUrl}/api/countries`).subscribe({
+      next: (data) => {
+        this.countries.set(data);
+        this.isLoadingCountries.set(false);
+      },
+      error: () => {
+        this.isLoadingCountries.set(false);
+      },
+    });
+  }
+
+  countryOptions = computed<SelectOption[]>(() => {
+    const countries = this.countries();
+    return countries.map((c) => ({
+      value: c.code,
+      label: `${c.flagEmoji ?? ''} ${c.name}`,
+    }));
+  });
+
   registerFormValue = signal<RegisterModel>({
     email: '',
     password: '',
     displayName: '',
+    countryCode: '',
   });
 
   passwordRequirements = computed<PasswordRequirement[]>(() => {
@@ -335,6 +384,7 @@ export class RegisterPageComponent {
       required(form.displayName, { message: 'Name is required' });
       required(form.email, { message: 'Email is required' });
       required(form.password, { message: 'Password is required' });
+      required(form.countryCode, { message: 'Country is required' });
       minLength(form.password, 8, { message: 'Password must contain at least 8 characters '});
     },
     {

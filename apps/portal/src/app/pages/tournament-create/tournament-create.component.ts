@@ -2,7 +2,9 @@ import {
   Component,
   inject,
   signal,
-  ChangeDetectionStrategy, computed,
+  ChangeDetectionStrategy,
+  computed,
+  resource,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -20,51 +22,23 @@ import {
 import { InputComponent } from '@chessops/ui/input';
 import { SelectComponent, type SelectOption } from '@chessops/ui/select';
 import { CardComponent } from '@chessops/ui/card';
-
-const COUNTRY_OPTIONS: SelectOption[] = [
-  { value: '', label: 'Select a country' },
-  { value: 'US', label: 'United States' },
-  { value: 'GB', label: 'United Kingdom' },
-  { value: 'DE', label: 'Germany' },
-  { value: 'FR', label: 'France' },
-  { value: 'ES', label: 'Spain' },
-  { value: 'IT', label: 'Italy' },
-  { value: 'RU', label: 'Russia' },
-  { value: 'CN', label: 'China' },
-  { value: 'IN', label: 'India' },
-  { value: 'BR', label: 'Brazil' },
-  { value: 'AR', label: 'Argentina' },
-  { value: 'AU', label: 'Australia' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'JP', label: 'Japan' },
-  { value: 'KR', label: 'South Korea' },
-  { value: 'NL', label: 'Netherlands' },
-  { value: 'SE', label: 'Sweden' },
-  { value: 'NO', label: 'Norway' },
-  { value: 'DK', label: 'Denmark' },
-  { value: 'FI', label: 'Finland' },
-  { value: 'PL', label: 'Poland' },
-  { value: 'CZ', label: 'Czech Republic' },
-  { value: 'HU', label: 'Hungary' },
-  { value: 'RO', label: 'Romania' },
-  { value: 'BG', label: 'Bulgaria' },
-  { value: 'GR', label: 'Greece' },
-  { value: 'TR', label: 'Turkey' },
-  { value: 'IL', label: 'Israel' },
-  { value: 'EG', label: 'Egypt' },
-  { value: 'ZA', label: 'South Africa' },
-  { value: 'KE', label: 'Kenya' },
-  { value: 'MX', label: 'Mexico' },
-  { value: 'CL', label: 'Chile' },
-  { value: 'CO', label: 'Colombia' },
-  { value: 'OTHER', label: 'Other' },
-];
+import { injectBackendUrl } from '@chessops/core/providers';
+import { HttpClient } from '@angular/common/http';
+import { lastValueFrom } from 'rxjs';
 
 const FORMAT_OPTIONS: SelectOption[] = [
   { value: 'swiss', label: 'Swiss System' },
   { value: 'roundrobin', label: 'Round Robin' },
   { value: 'elimination', label: 'Single Elimination' },
 ];
+
+interface Country {
+  id: string;
+  name: string;
+  code: string;
+  dialCode?: string;
+  flagEmoji?: string;
+}
 
 @Component({
   selector: 'chessops-tournament-create',
@@ -129,7 +103,7 @@ const FORMAT_OPTIONS: SelectOption[] = [
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <chessops-select
                   label="Country"
-                  [options]="countryOptions"
+                  [options]="countryOptions()"
                   [formField]="tournamentForm.country"
                 />
                 <chessops-input
@@ -286,6 +260,25 @@ const FORMAT_OPTIONS: SelectOption[] = [
 export class TournamentCreateComponent {
   private tournamentService = inject(TournamentService);
   private router = inject(Router);
+  private http = inject(HttpClient);
+  private backendUrl = injectBackendUrl();
+
+  protected countriesResource = resource({
+    loader: () =>
+      lastValueFrom(this.http.get<Country[]>(`${this.backendUrl}/api/countries`)),
+    defaultValue: []
+  });
+
+  protected countryOptions = computed<SelectOption[]>(() => {
+    const countries = this.countriesResource.value() ?? [];
+    return [
+      { value: '', label: 'Select a country' },
+      ...countries.map((c) => ({
+        value: c.code,
+        label: `${c.flagEmoji ?? ''} ${c.name}`.trim(),
+      })),
+    ];
+  });
 
   protected tournamentModel = signal<CreateTournamentDto>({
     name: '',
@@ -303,16 +296,18 @@ export class TournamentCreateComponent {
     countryName: '',
   });
 
-  submitCreateTournament = async (fieldTree: FieldTree<CreateTournamentDto>) => {
+  submitCreateTournament = async (
+    fieldTree: FieldTree<CreateTournamentDto>,
+  ) => {
     const currentData = fieldTree().value();
-    const countryOption = COUNTRY_OPTIONS.find(
-      (o) => o.value === currentData.country,
-    );
+    const countries = this.countriesResource.value() ?? [];
+    const country = countries.find((c) => c.code === currentData.country);
     const data: CreateTournamentDto = {
       ...currentData,
-      countryName: countryOption?.label || '',
+      countryName: country?.name || '',
     };
     const tournament = await this.tournamentService.createTournament(data);
+    await this.router.navigate(['/']);
 
     return undefined;
   };
@@ -330,7 +325,6 @@ export class TournamentCreateComponent {
     },
   );
 
-  protected countryOptions = COUNTRY_OPTIONS;
   protected formatOptions = FORMAT_OPTIONS;
   protected submitting = computed(() => this.tournamentForm().submitting());
   protected error = signal('');

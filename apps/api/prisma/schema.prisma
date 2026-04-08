@@ -310,3 +310,16 @@ model Result {
   @@index([playerId])
   @@index([roundId])
 }
+
+model Country {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String   @unique // ISO 3166-1 alpha-2 code (e.g., "US", "DE")
+  dialCode    String?  // Optional dial code (e.g., "+1", "+49")
+  flagEmoji   String?  // Optional flag emoji
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([code])
+  @@index([name])
+}

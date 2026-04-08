@@ -6,10 +6,12 @@ import {
   effect,
   computed,
   ChangeDetectionStrategy,
+  resource,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { form, FormField } from '@angular/forms/signals';
+import { HttpClient } from '@angular/common/http';
 import {
   TournamentService,
   type Tournament,
@@ -17,18 +19,16 @@ import {
 import { PaginationComponent } from '@chessops/ui/pagination';
 import { InputComponent } from '@chessops/ui/input';
 import { SelectComponent, type SelectOption } from '@chessops/ui/select';
+import { injectBackendUrl } from '@chessops/core/providers';
+import { lastValueFrom } from 'rxjs';
 
-const COUNTRIES: SelectOption[] = [
-  { value: '', label: 'All Countries' },
-  { value: 'US', label: 'United States' },
-  { value: 'GB', label: 'United Kingdom' },
-  { value: 'DE', label: 'Germany' },
-  { value: 'FR', label: 'France' },
-  { value: 'ES', label: 'Spain' },
-  { value: 'IT', label: 'Italy' },
-  { value: 'KE', label: 'Kenya' },
-  { value: 'OTHER', label: 'Other' },
-];
+interface Country {
+  id: string;
+  name: string;
+  code: string;
+  dialCode?: string;
+  flagEmoji?: string;
+}
 
 const STATUS_OPTIONS: SelectOption[] = [
   { value: '', label: 'All Statuses' },
@@ -114,7 +114,7 @@ interface FilterModel {
           </div>
           <div class="flex-1 min-w-[180px]">
             <chessops-select
-              [options]="countries"
+              [options]="countries()"
               [formField]="filterForm.country"
             />
           </div>
@@ -215,6 +215,30 @@ interface FilterModel {
 })
 export class HomeComponent implements OnInit {
   private tournamentService = inject(TournamentService);
+  private http = inject(HttpClient);
+  private backendUrl = injectBackendUrl();
+
+  protected countriesResource = resource({
+    loader: async () =>{
+      return await lastValueFrom(
+        this.http.get<Country[]>('api/countries'),
+      );
+    },
+    defaultValue: [],
+  });
+
+  countries = computed<SelectOption[]>(() => {
+    const countries = this.countriesResource.value() ?? [];
+    console.log({ countries });
+    console.log(countries);
+    return [
+      { value: '', label: 'All Countries' },
+      ...countries.map((c) => ({
+        value: c.code,
+        label: `${c.flagEmoji ?? ''} ${c.name}`.trim(),
+      })),
+    ];
+  });
 
   filterModel = signal<FilterModel>({
     search: '',
@@ -226,7 +250,6 @@ export class HomeComponent implements OnInit {
   filterForm = form(this.filterModel);
 
   // Options
-  countries = COUNTRIES;
   statusOptions = STATUS_OPTIONS;
   formatOptions = FORMAT_OPTIONS;
 

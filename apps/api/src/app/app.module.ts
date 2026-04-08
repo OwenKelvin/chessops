@@ -17,6 +17,7 @@ import { TiebreakModule } from '../tiebreak/tiebreak.module';
 import { ExportModule } from '../export/export.module';
 import { ImportModule } from '../import/import.module';
 import { QueueModule } from '../queue/queue.module';
+import { CountryModule } from '../country/country.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { QueueModule } from '../queue/queue.module';
     ExportModule,
     ImportModule,
     QueueModule,
+    CountryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
