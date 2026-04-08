@@ -6,6 +6,8 @@ import {
   signal,
   ChangeDetectionStrategy,
   resource,
+  model,
+  input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -332,7 +334,7 @@ export class TournamentPlayersComponent {
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
 
-  tournamentId = signal<string | null>(null);
+  tournamentId = input<string | null>(null);
   tournament = signal<Tournament | null>(null);
   players = computed<TournamentPlayer[]>(
     () => this.tournament()?.players ?? [],
@@ -378,15 +380,12 @@ export class TournamentPlayersComponent {
     },
   });
 
-  loading = computed(() =>
-    this.playersResource.isLoading() || this.playersListResource.isLoading()
+  loading = computed(
+    () =>
+      this.playersResource.isLoading() || this.playersListResource.isLoading(),
   );
 
   constructor() {
-    effect(() => {
-      const id = this.route.snapshot.paramMap.get('id');
-      this.tournamentId.set(id);
-    });
 
     effect(() => {
       const data = this.playersResource.value();

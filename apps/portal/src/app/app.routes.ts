@@ -25,6 +25,6 @@ export const appRoutes: Route[] = [
   { path: 'tournaments/:id', component: TournamentDetailComponent },
   { path: 'tournaments/:id/standings', component: TournamentStandingsComponent },
   { path: 'tournaments/:id/manage', component: TournamentManageComponent },
-  { path: 'tournaments/:id/players', component: TournamentPlayersComponent },
+  { path: 'tournaments/:tournamentId/players', component: TournamentPlayersComponent },
   { path: 'tournaments/:id/admins', component: TournamentAdminsComponent },
 ];

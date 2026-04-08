@@ -1,9 +1,9 @@
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
-  APP_INITIALIZER,
+  APP_INITIALIZER, provideAppInitializer, inject,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { appRoutes } from './app.routes';
 import { provideBackendUrl  } from '@chessops/core/providers';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
@@ -15,14 +15,9 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideClientHydration(),
     provideBrowserGlobalErrorListeners(),
-    provideRouter(appRoutes),
+    provideRouter(appRoutes, withComponentInputBinding()),
     provideBackendUrl('http://localhost:8082'),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: (auth: AuthService) => () => auth.loadUser(),
-      deps: [AuthService],
-      multi: true,
-    },
+    provideAppInitializer((auth = inject(AuthService)) => auth.loadUser()),
   ],
 };

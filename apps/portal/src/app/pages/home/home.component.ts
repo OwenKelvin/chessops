@@ -229,8 +229,6 @@ export class HomeComponent implements OnInit {
 
   countries = computed<SelectOption[]>(() => {
     const countries = this.countriesResource.value() ?? [];
-    console.log({ countries });
-    console.log(countries);
     return [
       { value: '', label: 'All Countries' },
       ...countries.map((c) => ({
