@@ -105,6 +105,9 @@ import { BadgeComponent } from '@chessops/ui/badge';
             <a [routerLink]="['/tournaments', t.id, 'manage']" class="btn btn-secondary">
               Manage Tournament
             </a>
+            <a [routerLink]="['/tournaments', t.id, 'admins']" class="btn btn-secondary">
+              Manage Admins
+            </a>
           }
         </section>
 

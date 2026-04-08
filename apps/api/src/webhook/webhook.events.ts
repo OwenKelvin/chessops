@@ -31,6 +31,10 @@ export const WebhookEvents = {
   PLAYER_ADDED: 'player.added',
   PLAYER_REMOVED: 'player.removed',
 
+  // Admin events
+  TOURNAMENT_ADMIN_ASSIGNED: 'tournament.admin.assigned',
+  TOURNAMENT_ADMIN_REVOKED: 'tournament.admin.revoked',
+
   // Standings events
   STANDINGS_UPDATED: 'standings.updated',
   TIEBREAKS_CALCULATED: 'tiebreaks.calculated',

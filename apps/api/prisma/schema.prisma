@@ -221,6 +221,7 @@ model TournamentPlayer {
   rating        Int?
   status        String   @default("active") // active, withdrawn, expelled
   withdrawRound Int?     // Round number when withdrawn
+  isAdmin       Boolean  @default(false)
   createdAt     DateTime @default(now())
 
   tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)

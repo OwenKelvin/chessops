@@ -248,6 +248,11 @@ export class TournamentManageComponent implements OnInit {
       handler: () => this.navigateToPlayers(),
     },
     {
+      icon: '👑',
+      label: 'Manage Admins',
+      handler: () => this.navigateToAdmins(),
+    },
+    {
       icon: '📋',
       label: 'Create Round',
       handler: () => this.navigateToRounds(),
@@ -286,6 +291,11 @@ export class TournamentManageComponent implements OnInit {
   private navigateToPlayers(): void {
     const id = this.tournament()?.id;
     if (id) this.router.navigate(['/tournaments', id, 'players']);
+  }
+
+  private navigateToAdmins(): void {
+    const id = this.tournament()?.id;
+    if (id) this.router.navigate(['/tournaments', id, 'admins']);
   }
 
   private navigateToRounds(): void {

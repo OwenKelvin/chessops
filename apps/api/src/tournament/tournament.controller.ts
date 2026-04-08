@@ -15,6 +15,7 @@ import {
 import { TournamentService } from './tournament.service';
 import { CreateTournamentDto, UpdateTournamentDto } from './dto/create-tournament.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { TournamentAdminGuard } from './guards/tournament-admin.guard';
 
 @Controller('tournaments')
 export class TournamentController {
@@ -71,9 +72,9 @@ export class TournamentController {
     return this.tournamentService.delete(id, req.user.userId);
   }
 
-  // Player management - all require auth
+  // Player management - all require auth (owner or admin)
   @Post(':id/players')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async addPlayer(
     @Req() req: any,
     @Param('id') tournamentId: string,
@@ -91,7 +92,7 @@ export class TournamentController {
   }
 
   @Delete(':id/players/:playerId')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async removePlayer(
     @Req() req: any,
     @Param('id') tournamentId: string,
@@ -101,7 +102,7 @@ export class TournamentController {
   }
 
   @Post(':id/players/:playerId/withdraw')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async withdrawPlayer(
     @Param('id') tournamentId: string,
     @Param('playerId') playerId: string,
@@ -166,6 +167,35 @@ export class TournamentController {
       throw new BadRequestException('pairingId and result are required');
     }
     return this.tournamentService.submitResult(body.pairingId, body.result);
+  }
+
+  // Admin management endpoints
+  @Get(':id/admins')
+  async getAdmins(@Param('id') id: string) {
+    return this.tournamentService.getAdmins(id);
+  }
+
+  @Post(':id/admins')
+  @UseGuards(JwtAuthGuard, TournamentAdminGuard)
+  async assignAdmin(
+    @Req() req: any,
+    @Param('id') tournamentId: string,
+    @Body() body: { playerId: string },
+  ) {
+    if (!body.playerId) {
+      throw new BadRequestException('playerId is required');
+    }
+    return this.tournamentService.assignAdmin(tournamentId, body.playerId, req.user.userId);
+  }
+
+  @Delete(':id/admins/:playerId')
+  @UseGuards(JwtAuthGuard, TournamentAdminGuard)
+  async revokeAdmin(
+    @Req() req: any,
+    @Param('id') tournamentId: string,
+    @Param('playerId') playerId: string,
+  ) {
+    return this.tournamentService.revokeAdmin(tournamentId, playerId, req.user.userId);
   }
 
 }

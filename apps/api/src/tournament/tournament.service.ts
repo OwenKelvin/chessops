@@ -444,4 +444,119 @@ export class TournamentService {
 
     return standings;
   }
+
+  // Admin management
+  async assignAdmin(tournamentId: string, playerId: string, userId: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+
+    // Check if player exists in tournament
+    const tournamentPlayer = await this.prisma.tournamentPlayer.findUnique({
+      where: {
+        tournamentId_playerId: {
+          tournamentId,
+          playerId,
+        },
+      },
+    });
+
+    if (!tournamentPlayer) {
+      throw new NotFoundException('Player not found in tournament');
+    }
+
+    await this.prisma.tournamentPlayer.update({
+      where: {
+        tournamentId_playerId: {
+          tournamentId,
+          playerId,
+        },
+      },
+      data: {
+        isAdmin: true,
+      },
+    });
+
+    await this.webhookService.publish(WebhookEvents.TOURNAMENT_ADMIN_ASSIGNED, {
+      tournamentId,
+      playerId,
+      assignedBy: userId,
+    });
+
+    return { success: true };
+  }
+
+  async revokeAdmin(tournamentId: string, playerId: string, userId: string) {
+    const tournamentPlayer = await this.prisma.tournamentPlayer.findUnique({
+      where: {
+        tournamentId_playerId: {
+          tournamentId,
+          playerId,
+        },
+      },
+    });
+
+    if (!tournamentPlayer) {
+      throw new NotFoundException('Player not found in tournament');
+    }
+
+    await this.prisma.tournamentPlayer.update({
+      where: {
+        tournamentId_playerId: {
+          tournamentId,
+          playerId,
+        },
+      },
+      data: {
+        isAdmin: false,
+      },
+    });
+
+    await this.webhookService.publish(WebhookEvents.TOURNAMENT_ADMIN_REVOKED, {
+      tournamentId,
+      playerId,
+      revokedBy: userId,
+    });
+
+    return { success: true };
+  }
+
+  async getAdmins(tournamentId: string) {
+    const admins = await this.prisma.tournamentPlayer.findMany({
+      where: {
+        tournamentId,
+        isAdmin: true,
+      },
+      include: {
+        player: true,
+      },
+    });
+
+    return admins;
+  }
+
+  async isTournamentAdmin(tournamentId: string, playerId: string): Promise<boolean> {
+    const tournamentPlayer = await this.prisma.tournamentPlayer.findUnique({
+      where: {
+        tournamentId_playerId: {
+          tournamentId,
+          playerId,
+        },
+      },
+    });
+
+    return tournamentPlayer?.isAdmin === true;
+  }
+
+  async isTournamentOwner(tournamentId: string, userId: string): Promise<boolean> {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+
+    return tournament?.ownerId === userId;
+  }
 }

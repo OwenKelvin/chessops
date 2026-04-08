@@ -32,11 +32,24 @@ export interface TournamentPlayer {
   seed: number;
   rating?: number;
   status: string;
+  isAdmin?: boolean;
   player: {
     id: string;
     firstName: string;
     lastName: string;
     rating?: number;
+  };
+}
+
+export interface TournamentAdmin {
+  id: string;
+  playerId: string;
+  isAdmin: boolean;
+  player: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
   };
 }
 
@@ -208,6 +221,29 @@ export class TournamentService {
         pairingId,
         result,
       }),
+    );
+  }
+
+  // Admin management
+  async getAdmins(tournamentId: string): Promise<TournamentAdmin[]> {
+    return firstValueFrom(
+      this.http.get<TournamentAdmin[]>(`api/tournaments/${tournamentId}/admins`),
+    );
+  }
+
+  async assignAdmin(tournamentId: string, playerId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`api/tournaments/${tournamentId}/admins`, {
+        playerId,
+      }),
+    );
+  }
+
+  async revokeAdmin(tournamentId: string, playerId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(
+        `api/tournaments/${tournamentId}/admins/${playerId}`,
+      ),
     );
   }
 }

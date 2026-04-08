@@ -11,6 +11,7 @@ import { TournamentStandingsComponent } from './pages/tournament/tournament-stan
 import { TournamentCreateComponent } from './pages/tournament-create/tournament-create.component';
 import { TournamentManageComponent } from './pages/tournament-manage/tournament-manage.component';
 import { TournamentPlayersComponent } from './pages/tournament-players/tournament-players.component';
+import { TournamentAdminsComponent } from './pages/tournament-admins/tournament-admins.component';
 
 export const appRoutes: Route[] = [
   { path: '', component: HomeComponent },
@@ -25,4 +26,5 @@ export const appRoutes: Route[] = [
   { path: 'tournaments/:id/standings', component: TournamentStandingsComponent },
   { path: 'tournaments/:id/manage', component: TournamentManageComponent },
   { path: 'tournaments/:id/players', component: TournamentPlayersComponent },
+  { path: 'tournaments/:id/admins', component: TournamentAdminsComponent },
 ];
