@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { WebhookService } from '../webhook/webhook.service';
 import { WebhookEvents } from '../webhook/webhook.events';
@@ -74,7 +78,10 @@ export class TournamentService {
       where.isPublic = filters.isPublic;
     }
 
-    const skip = filters?.page && filters?.limit ? (Number(filters.page) - 1) * Number(filters.limit) : undefined;
+    const skip =
+      filters?.page && filters?.limit
+        ? (Number(filters.page) - 1) * Number(filters.limit)
+        : undefined;
     const take = filters?.limit ? Number(filters.limit) : undefined;
 
     const [tournaments, total] = await Promise.all([
@@ -137,17 +144,21 @@ export class TournamentService {
 
     const updateData: any = {};
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
+    if (data.description !== undefined)
+      updateData.description = data.description;
     if (data.location !== undefined) updateData.location = data.location;
-    if (data.startDate !== undefined) updateData.startDate = new Date(data.startDate);
+    if (data.startDate !== undefined)
+      updateData.startDate = new Date(data.startDate);
     if (data.endDate !== undefined) updateData.endDate = new Date(data.endDate);
     if (data.status !== undefined) updateData.status = data.status;
     if (data.format !== undefined) updateData.format = data.format;
     if (data.maxRounds !== undefined) updateData.maxRounds = data.maxRounds;
-    if (data.timeControl !== undefined) updateData.timeControl = data.timeControl;
+    if (data.timeControl !== undefined)
+      updateData.timeControl = data.timeControl;
     if (data.maxPlayers !== undefined) updateData.maxPlayers = data.maxPlayers;
     if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;
-    if (data.registrationOpen !== undefined) updateData.registrationOpen = data.registrationOpen;
+    if (data.registrationOpen !== undefined)
+      updateData.registrationOpen = data.registrationOpen;
 
     const updated = await this.prisma.tournament.update({
       where: { id },
@@ -168,7 +179,9 @@ export class TournamentService {
     });
 
     if (!tournament) {
-      throw new NotFoundException('Tournament not found or you do not have permission to delete it');
+      throw new NotFoundException(
+        'Tournament not found or you do not have permission to delete it',
+      );
     }
 
     await this.prisma.tournament.delete({
@@ -184,7 +197,12 @@ export class TournamentService {
   }
 
   // Player management
-  async addPlayer(tournamentId: string, playerId: string, seed?: number, rating?: number) {
+  async addPlayer(
+    tournamentId: string,
+    playerId: string,
+    seed?: number,
+    rating?: number,
+  ) {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
     });
@@ -239,7 +257,11 @@ export class TournamentService {
     return { success: true };
   }
 
-  async withdrawPlayer(tournamentId: string, playerId: string, roundNumber?: number) {
+  async withdrawPlayer(
+    tournamentId: string,
+    playerId: string,
+    roundNumber?: number,
+  ) {
     await this.prisma.tournamentPlayer.update({
       where: {
         tournamentId_playerId: {
@@ -319,7 +341,12 @@ export class TournamentService {
   }
 
   // Pairing management
-  async createPairing(roundId: string, whiteId: string, blackId: string, boardNumber?: number) {
+  async createPairing(
+    roundId: string,
+    whiteId: string,
+    blackId: string,
+    boardNumber?: number,
+  ) {
     const pairing = await this.prisma.pairing.create({
       data: {
         roundId,
@@ -383,7 +410,10 @@ export class TournamentService {
         tournamentId: pairing.round.tournamentId,
         playerId: pairing.whiteId,
         tournamentPlayerId: (await this.prisma.tournamentPlayer.findFirst({
-          where: { tournamentId: pairing.round.tournamentId, playerId: pairing.whiteId },
+          where: {
+            tournamentId: pairing.round.tournamentId,
+            playerId: pairing.whiteId,
+          },
         }))!.id,
         roundId: pairing.roundId,
         opponentId: pairing.blackId,
@@ -397,7 +427,10 @@ export class TournamentService {
         tournamentId: pairing.round.tournamentId,
         playerId: pairing.blackId,
         tournamentPlayerId: (await this.prisma.tournamentPlayer.findFirst({
-          where: { tournamentId: pairing.round.tournamentId, playerId: pairing.blackId },
+          where: {
+            tournamentId: pairing.round.tournamentId,
+            playerId: pairing.blackId,
+          },
         }))!.id,
         roundId: pairing.roundId,
         opponentId: pairing.whiteId,
@@ -431,7 +464,10 @@ export class TournamentService {
       name: `${p.player.firstName} ${p.player.lastName}`,
       seed: p.seed,
       rating: p.rating,
-      points: p.results.reduce((sum: number, r: any) => sum + parseFloat(r.result), 0),
+      points: p.results.reduce(
+        (sum: number, r: any) => sum + parseFloat(r.result),
+        0,
+      ),
       games: p.results.length,
       status: p.status,
     }));
@@ -539,7 +575,10 @@ export class TournamentService {
     return admins;
   }
 
-  async isTournamentAdmin(tournamentId: string, playerId: string): Promise<boolean> {
+  async isTournamentAdmin(
+    tournamentId: string,
+    playerId: string,
+  ): Promise<boolean> {
     const tournamentPlayer = await this.prisma.tournamentPlayer.findUnique({
       where: {
         tournamentId_playerId: {
@@ -552,7 +591,10 @@ export class TournamentService {
     return tournamentPlayer?.isAdmin === true;
   }
 
-  async isTournamentOwner(tournamentId: string, userId: string): Promise<boolean> {
+  async isTournamentOwner(
+    tournamentId: string,
+    userId: string,
+  ): Promise<boolean> {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
     });

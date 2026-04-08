@@ -11,6 +11,7 @@ import {
   TournamentService,
   type Tournament,
 } from '../../services/tournament.service';
+import { AuthService } from '../../services/auth.service';
 import { BadgeComponent } from '@chessops/ui/badge';
 
 @Component({
@@ -354,11 +355,11 @@ import { BadgeComponent } from '@chessops/ui/badge';
 export class TournamentDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private tournamentService = inject(TournamentService);
+  private authService = inject(AuthService);
 
   tournament = signal<Tournament | null>(null);
   loading = signal(false);
   error = signal('');
-  isOwnerValue = signal(false);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -374,8 +375,6 @@ export class TournamentDetailComponent implements OnInit {
     try {
       const data = await this.tournamentService.getTournament(id);
       this.tournament.set(data);
-      // Check if current user is owner (would need auth service)
-      this.isOwnerValue.set(false); // TODO: Implement with auth service
     } catch (e) {
       this.error.set('Tournament not found');
       console.error(e);
@@ -385,7 +384,9 @@ export class TournamentDetailComponent implements OnInit {
   }
 
   isOwner(): boolean {
-    return this.isOwnerValue();
+    const t = this.tournament();
+    if (!t) return false;
+    return this.authService.isOwner(t.ownerId);
   }
 
   getStatusBadgeVariant(status: string): 'success' | 'warning' | 'error' | 'info' | 'live' {
