@@ -339,7 +339,6 @@ export class TournamentPlayersComponent {
   );
   playersCount = computed(() => this.players().length);
 
-  loading = signal(false);
   error = signal('');
   showAddPlayer = signal(false);
 
@@ -371,11 +370,17 @@ export class TournamentPlayersComponent {
 
   playersListResource = resource({
     loader: async () => {
+      const id = this.tournamentId();
+      if (!id) return [];
       return await lastValueFrom(
         this.http.get<Player[]>(`${this.backendUrl}/api/players`),
       );
     },
   });
+
+  loading = computed(() =>
+    this.playersResource.isLoading() || this.playersListResource.isLoading()
+  );
 
   constructor() {
     effect(() => {
@@ -387,7 +392,6 @@ export class TournamentPlayersComponent {
       const data = this.playersResource.value();
       if (data) {
         this.tournament.set(data);
-        this.loading.set(false);
       }
     });
 
@@ -406,9 +410,7 @@ export class TournamentPlayersComponent {
     });
   }
 
-  ngOnInit(): void {
-    this.loading.set(true);
-  }
+  ngOnInit(): void {}
 
   getPlayerFlag(player: Player): string {
     if (!player.country || player.country.length !== 2) return '🏁';
