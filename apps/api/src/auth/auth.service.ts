@@ -11,7 +11,7 @@ import { MailQueueService } from '../queue/mail-queue.service';
 import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 
 interface OAuthProfile {
   provider: string;
@@ -31,7 +31,7 @@ export class AuthService {
     private mailQueueService: MailQueueService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto, req?: any) {
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -52,7 +52,7 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id);
 
-    await this.storeRefreshToken(user.id, tokens.refreshToken);
+    await this.storeRefreshToken(user.id, tokens.refreshToken, req);
 
     return {
       user: {
@@ -65,7 +65,7 @@ export class AuthService {
     };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto, req?: any) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -86,7 +86,7 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id);
 
-    await this.storeRefreshToken(user.id, tokens.refreshToken);
+    await this.storeRefreshToken(user.id, tokens.refreshToken, req);
 
     return {
       user: {
@@ -101,18 +101,25 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
+    const tokenHash = this.hashToken(refreshToken);
     await this.prisma.session.deleteMany({
-      where: { token: refreshToken },
+      where: { tokenHash },
     });
   }
 
-  async refreshTokens(refreshToken: string) {
+  async refreshTokens(refreshToken: string, req?: any) {
+    const tokenHash = this.hashToken(refreshToken);
     const session = await this.prisma.session.findUnique({
-      where: { token: refreshToken },
+      where: { tokenHash },
     });
 
     if (!session) {
       throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    if (session.isUsed) {
+      await this.revokeAllSessions(session.userId);
+      throw new UnauthorizedException('Security breach detected: Refresh token reuse');
     }
 
     if (new Date() > session.expiresAt) {
@@ -124,20 +131,20 @@ export class AuthService {
 
     await this.prisma.session.update({
       where: { id: session.id },
-      data: {
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
+      data: { isUsed: true },
     });
+
+    await this.storeRefreshToken(session.userId, tokens.refreshToken, req);
 
     return tokens;
   }
 
   async revokeRefreshToken(userId: string, refreshToken: string) {
+    const tokenHash = this.hashToken(refreshToken);
     await this.prisma.session.deleteMany({
       where: {
         userId,
-        token: refreshToken,
+        tokenHash,
       },
     });
   }
@@ -163,17 +170,36 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async storeRefreshToken(userId: string, token: string) {
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private async storeRefreshToken(userId: string, token: string, req?: any) {
+    const tokenHash = this.hashToken(token);
+
+    const activeSessions = await this.prisma.session.findMany({
+      where: { userId, isUsed: false },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (activeSessions.length >= 5) {
+      await this.prisma.session.delete({
+        where: { id: activeSessions[0].id },
+      });
+    }
+
     await this.prisma.session.create({
       data: {
         userId,
-        token,
+        tokenHash,
+        userAgent: req?.headers['user-agent'],
+        ipAddress: req?.ip || req?.socket?.remoteAddress,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       },
     });
   }
 
-  async validateOAuthUser(profile: OAuthProfile) {
+  async validateOAuthUser(profile: OAuthProfile, req?: any) {
     // Check if OAuth account already exists
     const existingOAuth = await this.prisma.oauthAccount.findUnique({
       where: {
@@ -196,7 +222,7 @@ export class AuthService {
       });
 
       const tokens = await this.generateTokens(existingOAuth.userId);
-      await this.storeRefreshToken(existingOAuth.userId, tokens.refreshToken);
+      await this.storeRefreshToken(existingOAuth.userId, tokens.refreshToken, req);
 
       return {
         user: {
@@ -228,7 +254,7 @@ export class AuthService {
         });
 
         const tokens = await this.generateTokens(existingUser.id);
-        await this.storeRefreshToken(existingUser.id, tokens.refreshToken);
+        await this.storeRefreshToken(existingUser.id, tokens.refreshToken, req);
 
         return {
           user: {
@@ -263,7 +289,7 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user.id);
-    await this.storeRefreshToken(user.id, tokens.refreshToken);
+    await this.storeRefreshToken(user.id, tokens.refreshToken, req);
 
     return {
       user: {

@@ -15,7 +15,7 @@ export class OAuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(@Req() req: any) {
-    const result = await this.authService.validateOAuthUser(req.user);
+    const result = await this.authService.validateOAuthUser(req.user, req);
     return result;
   }
 
@@ -28,7 +28,7 @@ export class OAuthController {
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
   async githubAuthCallback(@Req() req: any) {
-    const result = await this.authService.validateOAuthUser(req.user);
+    const result = await this.authService.validateOAuthUser(req.user, req);
     return result;
   }
 }

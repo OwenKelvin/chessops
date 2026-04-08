@@ -61,10 +61,24 @@
       "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
       "executor": "nx:noop"
     },
+    "prisma:reset": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma migrate reset --config apps/api/prisma.config.ts --schema apps/api/prisma/schema.prisma",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "prisma:migrate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "prisma migrate dev --config apps/api/prisma.config.ts --schema apps/api/prisma/schema.prisma --name add_country_fields",
+        "command": "prisma migrate dev --config apps/api/prisma.config.ts --schema apps/api/prisma/schema.prisma",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "prisma:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prisma generate --config apps/api/prisma.config.ts --schema apps/api/prisma/schema.prisma",
         "cwd": "{workspaceRoot}"
       }
     },

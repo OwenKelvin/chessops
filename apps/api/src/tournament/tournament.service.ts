@@ -463,7 +463,7 @@ export class TournamentService {
       playerId: p.playerId,
       name: `${p.player.firstName} ${p.player.lastName}`,
       seed: p.seed,
-      rating: p.rating,
+      rating: Number(p.rating),
       points: p.results.reduce(
         (sum: number, r: any) => sum + parseFloat(r.result),
         0,

@@ -1,4 +1,12 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import {
+  Injectable,
+  inject,
+  signal,
+  computed,
+  DOCUMENT,
+  PLATFORM_ID,
+} from '@angular/core';
+import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
@@ -15,6 +23,11 @@ export interface User {
 export class AuthService {
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
+  private document = inject(DOCUMENT);
+  private platformId = inject(PLATFORM_ID); // ✅ Needed for platform checks
+
+  private isBrowser = isPlatformBrowser(this.platformId);
+  private isServer = isPlatformServer(this.platformId);
 
   private user = signal<User | null>(null);
   private loaded = signal(false);
@@ -25,11 +38,18 @@ export class AuthService {
   readonly isLoading = computed(() => !this.loaded());
 
   async loadUser(): Promise<void> {
+    // ✅ Skip auth entirely on the server — cookies aren't forwarded
+    //    unless you explicitly configure SSR transfer of auth headers.
+    //    Mark as loaded so guards/resolvers don't hang.
+    if (this.isServer) {
+      this.loaded.set(true);
+      return;
+    }
+
     try {
       const user = await this.fetchUser();
       this.user.set(user);
     } catch (err: any) {
-      // If 401, try to refresh token and retry
       if (err?.status === 401) {
         try {
           await this.refreshToken();
@@ -37,6 +57,7 @@ export class AuthService {
           this.user.set(user);
         } catch {
           this.user.set(null);
+          this.clearAuthCookies(); // ✅ Extracted to a guarded helper
         }
       } else {
         this.user.set(null);
@@ -55,25 +76,29 @@ export class AuthService {
   }
 
   async ensureAuthenticated(): Promise<void> {
+    // ✅ No-op on the server — authentication requires browser cookies
+    if (this.isServer) {
+      return;
+    }
+
     if (this.isAuthenticated()) {
       return;
     }
+
     if (this.isLoading()) {
-      // Wait for initial load
-      while (this.isLoading()) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      await this.waitForLoad(); // ✅ Extracted to avoid raw setTimeout in SSR
     }
+
     if (this.isAuthenticated()) {
       return;
     }
-    // Try to refresh and fetch user
+
     await this.refreshToken();
     const user = await this.fetchUser();
     this.user.set(user);
   }
 
-  private async refreshToken(): Promise<void> {
+  private refreshToken(): Promise<void> {
     if (this.refreshPromise) {
       return this.refreshPromise;
     }
@@ -84,15 +109,43 @@ export class AuthService {
         {},
         { withCredentials: true },
       ),
-    ).then(() => {}).catch((err) => {
-      throw err;
-    });
+    )
+      .then(() => {})
+      .catch((err) => {
+        throw err;
+      })
+      .finally(() => {
+        this.refreshPromise = null;
+      });
 
-    try {
-      await this.refreshPromise;
-    } finally {
-      this.refreshPromise = null;
-    }
+    return this.refreshPromise;
+  }
+
+  // ✅ setTimeout is browser-safe, but guard it anyway so the pattern
+  //    is explicit and won't hang if called unexpectedly on the server.
+  private waitForLoad(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const poll = () => {
+        if (!this.isLoading()) {
+          resolve();
+        } else if (this.isBrowser) {
+          setTimeout(poll, 100);
+        } else {
+          resolve(); // Don't hang on server
+        }
+      };
+      poll();
+    });
+  }
+
+  // ✅ Cookie manipulation is browser-only; document.cookie is a no-op
+  //    in Angular Universal's server DOM, but guard explicitly for clarity.
+  private clearAuthCookies(): void {
+    if (!this.isBrowser) return;
+    this.document.cookie =
+      'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    this.document.cookie =
+      'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
   }
 
   isOwner(ownerId: string): boolean {

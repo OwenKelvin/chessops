@@ -142,13 +142,16 @@ export class AuthController {
   @Post('token/refresh')
   @HttpCode(HttpStatus.OK)
   async refreshToken(@Req() req: any, @Res({ passthrough: false }) res: Response) {
+    console.log("Cookies" ,req.cookies);
+    console.log("Raw Cookies" ,req.raw?.cookies);
     const token = req.cookies?.refreshToken || req.raw?.cookies?.refreshToken;
+    console.log("Token ", token);
     if (!token) {
       throw new UnauthorizedException('No refresh token');
     }
     const tokens = await this.authService.refreshTokens(token);
     this.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-    return { accessToken: tokens.accessToken };
+    return res.send({ accessToken: tokens.accessToken });
   }
 
   @Post('token/revoke')
