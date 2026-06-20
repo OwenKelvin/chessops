@@ -55,3 +55,4 @@ __screenshots__/
 test-output
 
 vitest.config.*.timestamp*
+.nx/migrate-runs
