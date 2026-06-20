@@ -309,20 +309,20 @@ importers:
   libs/core:
     dependencies:
       '@angular/common':
-        specifier: ^21.2.0
-        version: 21.2.17(@angular/core@21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2)
+        specifier: ^22.0.0
+        version: 22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core':
-        specifier: ^21.2.0
-        version: 21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2)
+        specifier: ^22.0.0
+        version: 22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2)
 
   libs/ui:
     dependencies:
       '@angular/common':
-        specifier: ^21.1.0
-        version: 21.2.17(@angular/core@21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2)
+        specifier: ^22.0.0
+        version: 22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core':
-        specifier: ^21.1.0
-        version: 21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2)
+        specifier: ^22.0.0
+        version: 22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2)
 
 packages:
 
@@ -545,13 +545,6 @@ packages:
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     hasBin: true
 
-  '@angular/common@21.2.17':
-    resolution: {integrity: sha512-hqAQxRfi5ldFE42suAXRcY+JCANrUh7fuSQ/DtZ7L896id5BT/exuv6dWNBC1PyAfQmRbpD5Pt6/pd+tNLyhDQ==}
-    engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
-    peerDependencies:
-      '@angular/core': 21.2.17
-      rxjs: ^6.5.3 || ^7.4.0
-
   '@angular/common@22.0.2':
     resolution: {integrity: sha512-XSkHYRwrM54v4GZ+fg9KU1KbSIE/iQF33VXKo5zqVNKO11MnAbJ59qzyqX/5EzSeogHyBoHApprFKACsCAKm/Q==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0}
@@ -573,19 +566,6 @@ packages:
   '@angular/compiler@22.0.2':
     resolution: {integrity: sha512-5G+h/4/iCfqdTBsSgjB46Oe4oC6jXutCpFc5JYWRpnJWsbp3UfwRhwGVWIV1DBPnR8H/3QZzteRP1jINiH5+hg==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0}
-
-  '@angular/core@21.2.17':
-    resolution: {integrity: sha512-wYHpwIdnUnjQFOJJNqRcGx7LS3u64jT+R9L0TnMR/ViBM9dQgGYImlSikkftg2yrFCNo5aKRxhG2LLskQurVdg==}
-    engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
-    peerDependencies:
-      '@angular/compiler': 21.2.17
-      rxjs: ^6.5.3 || ^7.4.0
-      zone.js: ~0.15.0 || ~0.16.0
-    peerDependenciesMeta:
-      '@angular/compiler':
-        optional: true
-      zone.js:
-        optional: true
 
   '@angular/core@22.0.2':
     resolution: {integrity: sha512-YMs6OZNeXh4tg67ePwSRN426WYvjqGdjxEwLrdOONKAruOmJAzW/Tqe328k/4SHfdbJTR87GPpRi5FzVP43DRA==}
@@ -9660,12 +9640,6 @@ snapshots:
       - chokidar
       - supports-color
 
-  '@angular/common@21.2.17(@angular/core@21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2)':
-    dependencies:
-      '@angular/core': 21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2)
-      rxjs: 7.8.2
-      tslib: 2.8.1
-
   '@angular/common@22.0.2(@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2))(rxjs@7.8.2)':
     dependencies:
       '@angular/core': 22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2)
@@ -9691,13 +9665,6 @@ snapshots:
   '@angular/compiler@22.0.2':
     dependencies:
       tslib: 2.8.1
-
-  '@angular/core@21.2.17(@angular/compiler@22.0.2)(rxjs@7.8.2)':
-    dependencies:
-      rxjs: 7.8.2
-      tslib: 2.8.1
-    optionalDependencies:
-      '@angular/compiler': 22.0.2
 
   '@angular/core@22.0.2(@angular/compiler@22.0.2)(rxjs@7.8.2)':
     dependencies:

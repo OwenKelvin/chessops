@@ -73,8 +73,8 @@ export class InputComponent
   readonly disabled = input<boolean>(false);
   readonly touched = model<boolean>(false);
   readonly required = input<boolean>(false);
-  readonly min = input<number | undefined>(undefined);
-  readonly max = input<number | undefined>(undefined);
+  readonly min = input<string | number | undefined>(undefined);
+  readonly max = input<string | number | undefined>(undefined);
   readonly minLength = input<number | undefined>(undefined);
   readonly maxLength = input<number | undefined>(undefined);
   readonly autocomplete = input<string>();
