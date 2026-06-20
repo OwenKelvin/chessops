@@ -1,5 +1,4 @@
 import {
-  Injectable,
   HttpRequest,
   HttpHandler,
   HttpEvent,
@@ -22,6 +21,7 @@ import {
 import { StorageService } from '../services/storage.service';
 import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
+import { Injectable } from '@angular/core';
 
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
@@ -59,7 +59,7 @@ export class JwtInterceptor implements HttpInterceptor {
   private handle401Error(request: HttpRequest<any>, next: HttpHandler) {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
-      this.refreshTokenSubject.setValue(null);
+      this.refreshTokenSubject.next(null);
 
       return from(this.authService.refreshToken()).pipe(
         switchMap((tokens) => {

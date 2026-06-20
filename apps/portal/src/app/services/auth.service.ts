@@ -31,7 +31,7 @@ export class AuthService {
 
   private user = signal<User | null>(null);
   private loaded = signal(false);
-  private refreshPromise: Promise<void> | null = null;
+  private refreshPromise: Promise<{ accessToken: string } | void> | null = null;
 
   readonly currentUser = computed(() => this.user());
   readonly isAuthenticated = computed(() => this.user() !== null);
@@ -98,9 +98,9 @@ export class AuthService {
     this.user.set(user);
   }
 
-  private refreshToken(): Promise<void> {
+  refreshToken(): Promise<{ accessToken: string }> {
     if (this.refreshPromise) {
-      return this.refreshPromise;
+      return this.refreshPromise as Promise<{ accessToken: string }>;
     }
 
     this.refreshPromise = firstValueFrom(
@@ -110,7 +110,6 @@ export class AuthService {
         { withCredentials: true },
       ),
     )
-      .then(() => {})
       .catch((err) => {
         throw err;
       })
@@ -118,7 +117,7 @@ export class AuthService {
         this.refreshPromise = null;
       });
 
-    return this.refreshPromise;
+    return this.refreshPromise as Promise<{ accessToken: string }>;
   }
 
   // ✅ setTimeout is browser-safe, but guard it anyway so the pattern
@@ -146,6 +145,12 @@ export class AuthService {
       'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     this.document.cookie =
       'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  }
+
+  logout(): void {
+    this.user.set(null);
+    this.loaded.set(true);
+    this.clearAuthCookies();
   }
 
   isOwner(ownerId: string): boolean {

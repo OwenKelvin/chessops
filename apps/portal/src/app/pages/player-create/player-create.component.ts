@@ -22,7 +22,6 @@ import { injectBackendUrl } from '@chessops/core/providers';
 import { InputComponent } from '@chessops/ui/input';
 import { SelectComponent, type SelectOption } from '@chessops/ui/select';
 import { CardComponent } from '@chessops/ui/card';
-import { ButtonComponent } from '@chessops/ui/button';
 
 interface Country {
   id: string;
@@ -54,7 +53,6 @@ interface CreatePlayerDto {
     InputComponent,
     SelectComponent,
     CardComponent,
-    ButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
