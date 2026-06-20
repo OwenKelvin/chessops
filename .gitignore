@@ -57,3 +57,4 @@ test-output
 vitest.config.*.timestamp*
 .nx/migrate-runs
 .nx/polygraph
+.nx/self-healing
