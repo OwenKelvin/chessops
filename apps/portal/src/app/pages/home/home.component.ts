@@ -46,12 +46,12 @@ const FORMAT_OPTIONS: SelectOption[] = [
 ];
 
 const STATUS_CLASSES: Record<string, string> = {
-  live: 'bg-error text-primary-foreground animate-pulse',
-  active: 'bg-error text-primary-foreground animate-pulse',
-  registration: 'bg-success-light text-success',
-  completed: 'bg-surface-elevated text-muted border border-border-light',
-  draft: 'bg-warning-light text-warning',
-  cancelled: 'bg-surface-elevated text-muted border border-border-light',
+  live: 'badge-live',
+  active: 'badge-live',
+  registration: 'badge-success',
+  completed: 'badge-default',
+  draft: 'badge-warning',
+  cancelled: 'badge-default',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -83,134 +83,440 @@ interface FilterModel {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-background text-foreground font-body">
-      <!-- Hero -->
-      <section class="text-center py-12 px-6 bg-surface border-b border-border">
-        <h1 class="text-4xl font-bold mb-2 text-primary font-display">
-          Chess Tournament Results
-        </h1>
-        <p class="text-lg text-muted mb-6">
-          Browse and manage chess tournaments from around the world
-        </p>
-        <div class="flex justify-center">
-          <a
-            routerLink="/tournaments/create"
-            class="px-6 py-3 bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-lg transition-colors font-display"
-          >
-            Create Tournament
-          </a>
+    <div class="home-page">
+      <!-- Splash Hero -->
+      <section class="hero">
+        <div class="hero-content">
+          <p class="hero-eyebrow">Chess Tournament Platform</p>
+          <h1 class="hero-title">
+            <span class="hero-title__gradient">Organize.</span>
+            Pair.
+            <span class="hero-title__gradient">Champion.</span>
+          </h1>
+          <p class="hero-subtitle">
+            A modern arena for chess tournaments — from registration to final standings.
+          </p>
+          <div class="hero-actions">
+            <a routerLink="/tournaments/create" class="btn btn-primary btn-lg">
+              Create Tournament
+            </a>
+            <a routerLink="/docs/api" class="btn btn-ghost btn-lg">
+              Explore API
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-chess-pieces" aria-hidden="true">
+          <span class="piece piece--king">♔</span>
+          <span class="piece piece--queen">♕</span>
+          <span class="piece piece--rook">♖</span>
+          <span class="piece piece--knight">♘</span>
+        </div>
+
+        <div class="hero-scroll" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
         </div>
       </section>
 
       <!-- Filters -->
-      <section class="p-6 bg-surface border-b border-border sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto flex flex-wrap gap-4">
-          <div class="flex-1 min-w-[240px]">
+      <section class="filter-bar">
+        <div class="filter-bar__content">
+          <div class="filter-field">
             <chessops-input
               type="search"
               placeholder="Search tournaments..."
               [formField]="filterForm.search"
             />
           </div>
-          <div class="flex-1 min-w-[180px]">
-            <chessops-select
-              [options]="countries()"
-              [formField]="filterForm.country"
-            />
+          <div class="filter-field">
+            <chessops-select [options]="countries()" [formField]="filterForm.country" />
           </div>
-          <div class="flex-1 min-w-[180px]">
-            <chessops-select
-              [options]="statusOptions"
-              [formField]="filterForm.status"
-            />
+          <div class="filter-field">
+            <chessops-select [options]="statusOptions" [formField]="filterForm.status" />
           </div>
-          <div class="flex-1 min-w-[180px]">
-            <chessops-select
-              [options]="formatOptions"
-              [formField]="filterForm.format"
-            />
+          <div class="filter-field">
+            <chessops-select [options]="formatOptions" [formField]="filterForm.format" />
           </div>
         </div>
       </section>
 
       <!-- Tournament Grid -->
-      <section class="p-6 max-w-7xl mx-auto">
-        @if (loading()) {
-          <div class="py-20 text-center">
-            <div
-              class="w-10 h-10 border-4 border-border-light border-t-accent rounded-full animate-spin mx-auto mb-4"
-            ></div>
-            <p class="text-muted-foreground">Loading tournaments...</p>
-          </div>
-        } @else if (error()) {
-          <div class="py-20 text-center text-error">
-            <p>{{ error() }}</p>
-          </div>
-        } @else if (tournaments().length === 0) {
-          <div class="py-20 text-center">
-            <h3 class="text-xl font-semibold mb-2 font-display">
-              No tournaments found
-            </h3>
-            <p class="text-muted-foreground">
-              Try adjusting your filters or create a new tournament
-            </p>
-          </div>
-        } @else {
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @for (tournament of enrichedTournaments(); track tournament.id) {
-              <a
-                [routerLink]="['/tournaments', tournament.id]"
-                class="block p-5 bg-surface border border-border-light rounded-xl
-                hover:border-accent hover:-translate-y-1 transition-all duration-200"
-              >
-                <div class="flex justify-between items-center mb-3">
-                  <span
-                    [class]="
-                      'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ' +
-                      tournament.statusClass
-                    "
-                  >
-                    {{ tournament.statusLabel }}
-                  </span>
-                  @if (tournament.format) {
-                    <span class="text-xs text-muted-foreground capitalize">{{
-                      tournament.format
-                    }}</span>
-                  }
-                </div>
-
-                <h3 class="text-lg font-bold mb-2 font-display text-primary">
-                  {{ tournament.name }}
-                </h3>
-
-                <p class="text-sm text-muted mb-4 flex items-center gap-1.5">
-                  @if (tournament.country) {
-                    <span>{{ getCountryFlag(tournament.country) }}</span>
-                  }
-                  {{ tournament.countryName || tournament.location }}
-                </p>
-
-                <div class="flex flex-wrap gap-4 text-xs text-muted-foreground">
-                  <!-- date + players icons unchanged -->
-                </div>
-              </a>
-            }
-          </div>
-
-          @if (totalPages() > 1) {
-            <div
-              class="mt-8 pt-8 border-t border-border-light flex justify-center"
-            >
-              <chessops-pagination
-                [currentPage]="currentPage()"
-                [totalPages]="totalPages()"
-                (pageChange)="currentPage.set($event)"
-              />
+      <section class="tournament-section">
+        <div class="tournament-section__inner">
+          @if (loading()) {
+            <div class="loading-state">
+              <div class="loading-state__spinner"></div>
+              <p class="loading-state__text">Loading tournaments...</p>
             </div>
+          } @else if (error()) {
+            <div class="empty-state">
+              <p class="empty-state__message empty-state__message--error">{{ error() }}</p>
+            </div>
+          } @else if (tournaments().length === 0) {
+            <div class="empty-state">
+              <h3 class="empty-state__title">No tournaments found</h3>
+              <p class="empty-state__text">Try adjusting your filters or create a new tournament.</p>
+            </div>
+          } @else {
+            <div class="tournament-grid">
+              @for (tournament of enrichedTournaments(); track tournament.id) {
+                <a
+                  [routerLink]="['/tournaments', tournament.id]"
+                  class="tournament-card"
+                >
+                  <div class="tournament-card__header">
+                    <span [class]="'tournament-card__badge ' + tournament.statusClass">
+                      {{ tournament.statusLabel }}
+                    </span>
+                    @if (tournament.format) {
+                      <span class="tournament-card__format">{{ tournament.format }}</span>
+                    }
+                  </div>
+
+                  <h3 class="tournament-card__title">{{ tournament.name }}</h3>
+
+                  <p class="tournament-card__location">
+                    @if (tournament.country) {
+                      <span>{{ getCountryFlag(tournament.country) }}</span>
+                    }
+                    {{ tournament.countryName || tournament.location || 'Online' }}
+                  </p>
+
+                  <div class="tournament-card__meta">
+                    <span>{{ tournament.startDate | date: 'mediumDate' }}</span>
+                    <span>{{ tournament.maxPlayers ?? 'Unlimited' }} players</span>
+                  </div>
+                </a>
+              }
+            </div>
+
+            @if (totalPages() > 1) {
+              <div class="pagination-wrapper">
+                <chessops-pagination
+                  [currentPage]="currentPage()"
+                  [totalPages]="totalPages()"
+                  (pageChange)="currentPage.set($event)"
+                />
+              </div>
+            }
           }
-        }
+        </div>
       </section>
     </div>
+  `,
+  styles: `
+    .home-page {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 80vh;
+      display: grid;
+      place-items: center;
+      padding: 6rem 1.5rem 8rem;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      padding: 0.375rem 0.875rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-title {
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      line-height: 1.05;
+      margin: 0 0 1.25rem;
+      color: var(--color-foreground);
+    }
+
+    .hero-title__gradient {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      color: var(--color-muted);
+      max-width: 560px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .btn-lg {
+      padding: 0.875rem 1.75rem;
+      font-size: 1rem;
+    }
+
+    .hero-chess-pieces {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .piece {
+      position: absolute;
+      font-size: clamp(4rem, 10vw, 9rem);
+      line-height: 1;
+      opacity: 0.08;
+      color: var(--color-foreground);
+      filter: blur(1px);
+      animation: piece-float 20s ease-in-out infinite;
+    }
+
+    .piece--king {
+      top: 15%;
+      left: 8%;
+      animation-delay: 0s;
+    }
+
+    .piece--queen {
+      top: 20%;
+      right: 10%;
+      animation-delay: -5s;
+    }
+
+    .piece--rook {
+      bottom: 20%;
+      left: 12%;
+      animation-delay: -10s;
+    }
+
+    .piece--knight {
+      bottom: 18%;
+      right: 8%;
+      animation-delay: -15s;
+    }
+
+    @keyframes piece-float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-18px) rotate(3deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .piece {
+        animation: none;
+      }
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--color-muted);
+      animation: scroll-bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes scroll-bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    .filter-bar {
+      position: sticky;
+      top: 4.5rem;
+      z-index: 50;
+      padding: 1rem 1.5rem;
+      background: color-mix(in srgb, var(--color-surface), transparent 25%);
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .filter-bar__content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .filter-field {
+      min-width: 0;
+    }
+
+    .tournament-section {
+      padding: 3rem 1.5rem 5rem;
+    }
+
+    .tournament-section__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .loading-state,
+    .empty-state {
+      padding: 5rem 1rem;
+      text-align: center;
+    }
+
+    .loading-state__spinner {
+      width: 2.75rem;
+      height: 2.75rem;
+      border: 3px solid var(--color-border-light);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-state__text,
+    .empty-state__text {
+      color: var(--color-muted);
+    }
+
+    .empty-state__title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-foreground);
+    }
+
+    .empty-state__message--error {
+      color: var(--color-error);
+    }
+
+    .tournament-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .tournament-card {
+      display: block;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .tournament-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--color-primary);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--color-border-light);
+    }
+
+    .tournament-card__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .tournament-card__badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.625rem;
+      border-radius: 9999px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-live {
+      background: var(--color-error-light);
+      color: var(--color-error);
+      animation: pulse 2s infinite;
+    }
+
+    .badge-success {
+      background: var(--color-success-light);
+      color: var(--color-success);
+    }
+
+    .badge-warning {
+      background: var(--color-warning-light);
+      color: var(--color-warning);
+    }
+
+    .badge-default {
+      background: var(--color-info-light);
+      color: var(--color-info);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.65; }
+    }
+
+    .tournament-card__format {
+      font-size: 0.75rem;
+      color: var(--color-muted);
+      text-transform: capitalize;
+    }
+
+    .tournament-card__title {
+      font-size: 1.25rem;
+      margin: 0 0 0.5rem;
+      color: var(--color-foreground);
+      line-height: 1.3;
+    }
+
+    .tournament-card__location {
+      font-size: 0.875rem;
+      color: var(--color-muted);
+      margin: 0 0 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .tournament-card__meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--color-muted-foreground);
+      border-top: 1px solid var(--color-border-light);
+      padding-top: 0.875rem;
+    }
+
+    .pagination-wrapper {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--color-border-light);
+      display: flex;
+      justify-content: center;
+    }
   `,
 })
 export class HomeComponent implements OnInit {
@@ -219,10 +525,8 @@ export class HomeComponent implements OnInit {
   private backendUrl = injectBackendUrl();
 
   protected countriesResource = resource({
-    loader: async () =>{
-      return await lastValueFrom(
-        this.http.get<Country[]>('api/countries'),
-      );
+    loader: async () => {
+      return await lastValueFrom(this.http.get<Country[]>('api/countries'));
     },
     defaultValue: [],
   });
@@ -247,14 +551,12 @@ export class HomeComponent implements OnInit {
 
   filterForm = form(this.filterModel);
 
-  // Options
   statusOptions = STATUS_OPTIONS;
   formatOptions = FORMAT_OPTIONS;
 
   currentPage = signal(1);
   pageSize = 12;
 
-  // Computed
   totalPages = computed(() =>
     Math.ceil(this.tournamentService.total() / this.pageSize),
   );
@@ -264,19 +566,20 @@ export class HomeComponent implements OnInit {
   enrichedTournaments = computed(() =>
     this.tournamentService.tournaments().map((t) => ({
       ...t,
-      statusClass: STATUS_CLASSES[t.status] ?? 'bg-warning-light text-warning',
+      statusClass: STATUS_CLASSES[t.status] ?? 'badge-warning',
       statusLabel: STATUS_LABELS[t.status] ?? t.status,
     })),
   );
+
   loading = computed(() =>
     this.tournamentService.tournamentsResource.isLoading(),
   );
+
   error = computed(() =>
     this.tournamentService.error() ? 'Failed to load tournaments.' : '',
   );
 
   constructor() {
-    // Sync filters + page into service whenever they change
     effect(() => {
       const filters = this.filterModel();
       this.tournamentService.setFilters({
@@ -289,7 +592,6 @@ export class HomeComponent implements OnInit {
       });
     });
 
-    // Reset to page 1 when filters change (not page itself)
     effect(() => {
       this.filterModel();
       this.currentPage.set(1);
@@ -297,28 +599,6 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {}
-
-  getStatusClass(status: string): string {
-    const maps: Record<string, string> = {
-      live: 'bg-error text-primary-foreground animate-pulse',
-      active: 'bg-error text-primary-foreground animate-pulse',
-      registration: 'bg-success-light text-success',
-      completed: 'bg-surface-elevated text-muted border border-border-light',
-      draft: 'bg-warning-light text-warning',
-    };
-    return maps[status] || maps['draft'];
-  }
-
-  getStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-      live: 'Live',
-      active: 'Live',
-      registration: 'Registration',
-      completed: 'Completed',
-      draft: 'Draft',
-    };
-    return map[status] || status;
-  }
 
   getCountryFlag(countryCode?: string): string {
     if (!countryCode || countryCode.length !== 2) return '🌐';

@@ -28,7 +28,7 @@ export const tableVariants = cva(
 export type TableVariants = VariantProps<typeof tableVariants>;
 
 export const tableHeaderVariants = cva(
-  'px-4 py-3 text-left font-semibold text-foreground border-b border-border',
+  'px-4 py-3 text-left font-semibold text-foreground border-b border-border bg-surface/60',
   {
     variants: {
       align: {

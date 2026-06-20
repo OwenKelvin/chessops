@@ -1,3 +1,10 @@
+<div class="aurora-backdrop" aria-hidden="true">
+  <div class="aurora-blob aurora-blob--1"></div>
+  <div class="aurora-blob aurora-blob--2"></div>
+  <div class="aurora-blob aurora-blob--3"></div>
+  <div class="aurora-noise"></div>
+</div>
+
 <header class="app-header">
   <div class="header-content">
     <a routerLink="/" class="logo">
@@ -7,8 +14,11 @@
     <nav class="header-nav">
       <a routerLink="/" class="nav-link">Tournaments</a>
       <a routerLink="/tournaments/create" class="btn btn-primary btn-sm">Create Tournament</a>
+      <chessops-theme-toggle />
     </nav>
   </div>
 </header>
 
-<router-outlet></router-outlet>
+<main class="app-main">
+  <router-outlet></router-outlet>
+</main>

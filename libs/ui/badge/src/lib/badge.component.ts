@@ -44,23 +44,20 @@ export type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info' 
       color: var(--color-info);
     }
 
-    .badge-live {
-      background: #ef4444;
-      color: white;
-      animation: pulse 2s infinite;
-    }
+      .badge-live {
+        background: var(--color-error-light);
+        color: var(--color-error);
+        animation: pulse 2s infinite;
+      }
 
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
 
-    /* Dark mode adjustments */
-    @media (prefers-color-scheme: dark) {
-      .badge-default {
-        background: #4a4a4a;
-        color: #d4d4d4;
-      }
+    .badge-default {
+      background: var(--color-info-light);
+      color: var(--color-info);
     }
   `,
 })

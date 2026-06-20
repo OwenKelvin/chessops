@@ -20,13 +20,14 @@ export type CodeLanguage = 'typescript' | 'javascript' | 'bash' | 'json' | 'plai
   styles: `
     .code-block {
       position: relative;
-      border-radius: 0.5rem;
+      border-radius: 0.75rem;
       overflow: hidden;
       font-family: 'JetBrains Mono', 'Fira Code', monospace;
       font-size: 0.875rem;
       line-height: 1.6;
       background: var(--color-surface);
       border: 1px solid var(--color-border);
+      backdrop-filter: blur(12px);
     }
 
     .code-header {
@@ -57,8 +58,9 @@ export type CodeLanguage = 'typescript' | 'javascript' | 'bash' | 'json' | 'plai
     }
 
     .copy-button:hover {
-      background: var(--color-muted);
-      color: var(--color-muted-foreground);
+      background: var(--color-ghost-hover);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
     }
 
     .copy-button:disabled {
@@ -76,16 +78,7 @@ export type CodeLanguage = 'typescript' | 'javascript' | 'bash' | 'json' | 'plai
       font-family: inherit;
     }
 
-    /* Dark mode adjustments */
-    @media (prefers-color-scheme: dark) {
-      .code-block {
-        background: #1e1e1e;
-      }
-
-      .code-header {
-        background: #252525;
-      }
-    }
+    /* Remove hardcoded dark mode; tokens now handle both themes */
   `,
 })
 export class CodeBlockComponent implements AfterViewInit {

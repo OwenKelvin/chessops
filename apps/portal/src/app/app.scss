@@ -1,10 +1,12 @@
 .app-header {
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.75rem 1.5rem;
   position: sticky;
   top: 0;
   z-index: 100;
+  padding: 0.75rem 1.5rem;
+  background: color-mix(in srgb, var(--color-surface), transparent 30%);
+  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .header-content {
@@ -21,11 +23,13 @@
   gap: 0.5rem;
   font-size: 1.25rem;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-foreground);
   text-decoration: none;
+  font-family: var(--font-display);
+  transition: color 0.2s ease;
 
   &:hover {
-    color: var(--color-primary-hover);
+    color: var(--color-primary);
   }
 }
 
@@ -33,12 +37,12 @@
   width: 32px;
   height: auto;
   display: block;
+  filter: drop-shadow(0 0 6px var(--color-primary));
+  transition: filter 0.3s ease;
 }
 
-/* Ensure logo SVG uses theme colors */
-.logo-icon :deep(.queen-crown),
-.logo-icon :deep(.pawn-body) {
-  transition: fill 0.2s ease;
+.logo:hover .logo-icon {
+  filter: drop-shadow(0 0 12px var(--color-accent));
 }
 
 .header-nav {
@@ -48,9 +52,10 @@
 }
 
 .nav-link {
-  color: var(--color-foreground);
+  color: var(--color-muted);
   text-decoration: none;
   font-weight: 500;
+  transition: color 0.2s ease;
 
   &:hover {
     color: var(--color-primary);
@@ -58,27 +63,48 @@
 }
 
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
-  border: none;
+  border: 1px solid transparent;
   font-size: 0.875rem;
 }
 
 .btn-primary {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   color: var(--color-primary-foreground);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
 
   &:hover {
-    background: var(--color-primary-hover);
+    background: linear-gradient(135deg, var(--color-primary-hover), var(--color-secondary-hover));
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-ghost {
+  background: var(--color-ghost);
+  color: var(--color-ghost-foreground);
+  border-color: var(--color-border);
+
+  &:hover {
+    background: var(--color-ghost-hover);
+    border-color: var(--color-primary);
   }
 }
 
 .btn-sm {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
+}
+
+.app-main {
+  position: relative;
+  z-index: 1;
 }

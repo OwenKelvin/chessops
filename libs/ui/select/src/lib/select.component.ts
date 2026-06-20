@@ -34,9 +34,8 @@ export type SelectOption = {
         </label>
       }
       <div
-        class="relative bg-surface border rounded-md transition-colors duration-150
-                  focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20"
-        [class]="invalid() ? 'border-error' : 'border-border'"
+        class="relative rounded-lg border transition-all duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:border-primary bg-surface/60 backdrop-blur-sm hover:border-primary/50"
+        [class.border-error]="invalid()"
       >
         <select
           [id]="selectId()"
