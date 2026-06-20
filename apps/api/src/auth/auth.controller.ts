@@ -40,37 +40,10 @@ export class UpdateProfileDto {
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-    // Access token - short lived (15 min), HttpOnly, Secure in production
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      path: '/',
-    });
-
-    // Refresh token - longer lived (7 days), HttpOnly, Secure in production
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
-    });
-  }
-
-  private clearAuthCookies(res: Response) {
-    res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
-  }
-
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: false }) res: Response) {
-    const result = await this.authService.register(dto);
-    this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    return res.send({ user: result.user });
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   @Post('verify-email')
@@ -87,20 +60,14 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.login(dto);
-    this.setAuthCookies(res, result.accessToken, result.refreshToken);
-    return { user: result.user };
+  async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: any, @Res({ passthrough: false }) res: Response) {
-    const token = req.cookies?.refreshToken || req.raw?.cookies?.refreshToken;
-    if (token) {
-      await this.authService.logout(token);
-    }
-    this.clearAuthCookies(res);
+  async logout(@Body() dto: RefreshTokenDto) {
+    await this.authService.logout(dto.refreshToken);
     return { success: true };
   }
 
@@ -141,17 +108,11 @@ export class AuthController {
 
   @Post('token/refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Req() req: any, @Res({ passthrough: false }) res: Response) {
-    console.log("Cookies" ,req.cookies);
-    console.log("Raw Cookies" ,req.raw?.cookies);
-    const token = req.cookies?.refreshToken || req.raw?.cookies?.refreshToken;
-    console.log("Token ", token);
-    if (!token) {
+  async refreshToken(@Body() dto: RefreshTokenDto, @Req() req: any) {
+    if (!dto.refreshToken) {
       throw new UnauthorizedException('No refresh token');
     }
-    const tokens = await this.authService.refreshTokens(token);
-    this.setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
-    return res.send({ accessToken: tokens.accessToken });
+    return this.authService.refreshTokens(dto.refreshToken, req);
   }
 
   @Post('token/revoke')

@@ -52,8 +52,6 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id);
 
-    await this.storeRefreshToken(user.id, tokens.refreshToken, req);
-
     return {
       user: {
         id: user.id,
@@ -86,8 +84,6 @@ export class AuthService {
 
     const tokens = await this.generateTokens(user.id);
 
-    await this.storeRefreshToken(user.id, tokens.refreshToken, req);
-
     return {
       user: {
         id: user.id,
@@ -101,58 +97,29 @@ export class AuthService {
   }
 
   async logout(refreshToken: string) {
-    const tokenHash = this.hashToken(refreshToken);
-    await this.prisma.session.deleteMany({
-      where: { tokenHash },
-    });
+    // Stateless logout is handled by the client deleting the token.
+    // We return success to maintain API compatibility.
+    return { success: true };
   }
 
   async refreshTokens(refreshToken: string, req?: any) {
-    const tokenHash = this.hashToken(refreshToken);
-    const session = await this.prisma.session.findUnique({
-      where: { tokenHash },
-    });
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken);
+      const userId = payload.sub;
 
-    if (!session) {
-      throw new UnauthorizedException('Invalid refresh token');
+      const tokens = await this.generateTokens(userId);
+      return tokens;
+    } catch (e) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
-
-    if (session.isUsed) {
-      await this.revokeAllSessions(session.userId);
-      throw new UnauthorizedException('Security breach detected: Refresh token reuse');
-    }
-
-    if (new Date() > session.expiresAt) {
-      await this.prisma.session.delete({ where: { id: session.id } });
-      throw new UnauthorizedException('Refresh token expired');
-    }
-
-    const tokens = await this.generateTokens(session.userId);
-
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: { isUsed: true },
-    });
-
-    await this.storeRefreshToken(session.userId, tokens.refreshToken, req);
-
-    return tokens;
   }
 
   async revokeRefreshToken(userId: string, refreshToken: string) {
-    const tokenHash = this.hashToken(refreshToken);
-    await this.prisma.session.deleteMany({
-      where: {
-        userId,
-        tokenHash,
-      },
-    });
+    // No-op in stateless mode
   }
 
   async revokeAllSessions(userId: string) {
-    await this.prisma.session.deleteMany({
-      where: { userId },
-    });
+    // No-op in stateless mode
   }
 
   private async generateTokens(userId: string) {
@@ -175,28 +142,7 @@ export class AuthService {
   }
 
   private async storeRefreshToken(userId: string, token: string, req?: any) {
-    const tokenHash = this.hashToken(token);
-
-    const activeSessions = await this.prisma.session.findMany({
-      where: { userId, isUsed: false },
-      orderBy: { createdAt: 'asc' },
-    });
-
-    if (activeSessions.length >= 5) {
-      await this.prisma.session.delete({
-        where: { id: activeSessions[0].id },
-      });
-    }
-
-    await this.prisma.session.create({
-      data: {
-        userId,
-        tokenHash,
-        userAgent: req?.headers['user-agent'],
-        ipAddress: req?.ip || req?.socket?.remoteAddress,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-    });
+    // No-op in stateless mode
   }
 
   async validateOAuthUser(profile: OAuthProfile, req?: any) {

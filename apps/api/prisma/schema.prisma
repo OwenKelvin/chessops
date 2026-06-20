@@ -21,7 +21,6 @@ model User {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  sessions        Session[]
   oauthAccounts   OauthAccount[]
   mfaSecret       MfaSecret?
   recoveryTokens  AccountRecovery[]
@@ -32,22 +31,6 @@ model User {
   players         Player[]
 
   @@index([email])
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  tokenHash String   @unique
-  userAgent String?
-  ipAddress String?
-  isUsed    Boolean  @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([tokenHash])
 }
 
 model OauthAccount {
