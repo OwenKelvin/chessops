@@ -75,9 +75,6 @@ export class AuthRecoveryService {
         where: { id: recovery.id },
         data: { used: true },
       }),
-      this.prisma.session.deleteMany({
-        where: { userId: recovery.userId },
-      }),
     ]);
 
     return { message: 'Password reset successfully' };

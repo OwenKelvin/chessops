@@ -12,23 +12,23 @@ import { MfaService } from './mfa.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 class EnableMfaDto {
-  token: string;
+  token!: string;
 }
 
 class DisableMfaDto {
-  token: string;
+  token!: string;
 }
 
 class VerifyMfaDto {
-  token: string;
+  token!: string;
 }
 
 class VerifyBackupCodeDto {
-  code: string;
+  code!: string;
 }
 
 class ChallengeMfaDto {
-  token: string;
+  token!: string;
   userId?: string;
 }
 

@@ -3,11 +3,11 @@ import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 export class VerifyEmailDto {
   @IsString()
   @IsNotEmpty()
-  token: string;
+  token!: string;
 }
 
 export class ResendVerificationDto {
   @IsString()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 }

@@ -309,11 +309,6 @@ export class AuthService {
   }
 
   async deleteAccount(userId: string) {
-    // Delete all sessions first
-    await this.prisma.session.deleteMany({
-      where: { userId },
-    });
-
     // Delete OAuth accounts
     await this.prisma.oauthAccount.deleteMany({
       where: { userId },

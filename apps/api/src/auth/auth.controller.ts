@@ -22,8 +22,8 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IsOptional, IsString } from 'class-validator';
 
 class ChangePasswordDto {
-  currentPassword: string;
-  newPassword: string;
+  currentPassword!: string;
+  newPassword!: string;
 }
 
 export class UpdateProfileDto {

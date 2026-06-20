@@ -2,12 +2,12 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthRecoveryService } from './auth-recovery.service';
 
 class RequestResetDto {
-  email: string;
+  email!: string;
 }
 
 class ResetPasswordDto {
-  token: string;
-  newPassword: string;
+  token!: string;
+  newPassword!: string;
 }
 
 @Controller('auth')

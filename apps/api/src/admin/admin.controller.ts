@@ -5,7 +5,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../auth/guards/admin.guard';
 
 class SuspendUserDto {
-  suspended: boolean;
+  suspended!: boolean;
   reason?: string;
 }
 

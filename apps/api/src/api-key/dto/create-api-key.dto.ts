@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsArray, IsDateString } from 'class-validator';
 
 export class CreateApiKeyDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsArray()

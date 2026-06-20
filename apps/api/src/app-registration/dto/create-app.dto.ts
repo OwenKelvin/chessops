@@ -2,7 +2,7 @@ import { IsString, IsOptional, IsArray, IsUrl, IsBoolean } from 'class-validator
 
 export class CreateAppDto {
   @IsString()
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -53,5 +53,5 @@ export class UpdateAppDto {
 
 export class RegenerateSecretDto {
   @IsString()
-  currentSecret: string;
+  currentSecret!: string;
 }

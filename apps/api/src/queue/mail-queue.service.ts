@@ -60,7 +60,7 @@ export class MailQueueService implements OnModuleInit, OnModuleDestroy {
               html: job.data.html,
             });
             console.log(`Email sent to ${job.data.to}: ${job.data.subject}`);
-          } catch (err) {
+          } catch (err: any) {
             console.error(`Failed to send email: ${err.message}`);
             throw err;
           }
@@ -78,7 +78,7 @@ export class MailQueueService implements OnModuleInit, OnModuleDestroy {
         console.log(`Mail job ${job.id} completed`);
       });
 
-      this.worker.on('failed', (job: Job<MailJob>, err) => {
+      this.worker.on('failed', (job: Job<MailJob> | undefined, err: Error) => {
         console.error(`Mail job ${job?.id} failed:`, err);
       });
 
@@ -90,7 +90,7 @@ export class MailQueueService implements OnModuleInit, OnModuleDestroy {
 
       this.queueEnabled = true;
       console.log('Mail queue connected to Redis');
-    } catch (error) {
+    } catch (error: any) {
       console.warn('Mail queue disabled - Redis not available:', error.message);
       this.queueEnabled = false;
     }
@@ -131,7 +131,7 @@ export class MailQueueService implements OnModuleInit, OnModuleDestroy {
 
     try {
       await this.mailQueue.add('send-mail', mailData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add job to queue, sending directly:', error.message);
       await this.transporter.sendMail({
         from: this.configService.get('MAIL_FROM', '"ChessOps" <noreply@chessops.local>'),
