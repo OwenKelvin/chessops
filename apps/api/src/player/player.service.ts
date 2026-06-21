@@ -20,6 +20,7 @@ export class PlayerService {
         fideId: data.fideId,
         nationalId: data.nationalId,
         rating: data.rating || 0,
+        country: data.country,
         dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
         gender: data.gender,
       },

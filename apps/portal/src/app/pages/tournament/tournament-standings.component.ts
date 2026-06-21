@@ -272,10 +272,13 @@ export class TournamentStandingsComponent implements OnInit {
   loading = signal(false);
   error = signal('');
 
+  private tournamentIdValue = signal('');
+
   ngOnInit(): void {
-    const tournamentId = this.route.snapshot.paramMap.get('tournamentId');
-    if (tournamentId) {
-      this.loadStandings(tournamentId);
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.tournamentIdValue.set(id);
+      this.loadStandings(id);
     }
   }
 
@@ -284,10 +287,12 @@ export class TournamentStandingsComponent implements OnInit {
     this.error.set('');
 
     try {
-      const result = await this.tournamentService.getStandings(tournamentId);
+      const [tournament, result] = await Promise.all([
+        this.tournamentService.getTournament(tournamentId),
+        this.tournamentService.getStandings(tournamentId),
+      ]);
+      this.tournamentName.set(tournament.name);
       this.standings.set(result.standings);
-      // Tournament name would come from a separate call or route data
-      this.tournamentName.set('');
     } catch (e) {
       this.error.set('Failed to load standings');
       console.error(e);
@@ -297,6 +302,6 @@ export class TournamentStandingsComponent implements OnInit {
   }
 
   tournamentId(): string {
-    return this.route.snapshot.paramMap.get('tournamentId') || '';
+    return this.tournamentIdValue();
   }
 }

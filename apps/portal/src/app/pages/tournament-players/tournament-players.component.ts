@@ -6,13 +6,12 @@ import {
   signal,
   ChangeDetectionStrategy,
   resource,
-  model,
-  input,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, map } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
 import { NotificationService } from '../../services/notification.service';
 import { InputComponent } from '@chessops/ui/input';
@@ -336,7 +335,9 @@ export class TournamentPlayersComponent {
   private backendUrl = injectBackendUrl();
   private notification = inject(NotificationService);
 
-  tournamentId = input<string | null>(null);
+  private routeId = toSignal(this.route.paramMap.pipe(map((m) => m.get('id'))));
+
+  tournamentId = signal('');
   tournament = signal<Tournament | null>(null);
   players = computed<TournamentPlayer[]>(
     () => this.tournament()?.players ?? [],
@@ -388,11 +389,22 @@ export class TournamentPlayersComponent {
   );
 
   constructor() {
+    effect(() => {
+      const id = this.routeId();
+      this.tournamentId.set(id ?? '');
+    });
 
     effect(() => {
       const data = this.playersResource.value();
       if (data) {
         this.tournament.set(data);
+      }
+    });
+
+    effect(() => {
+      const err = this.playersResource.error();
+      if (err) {
+        this.error.set('Failed to load tournament');
       }
     });
 

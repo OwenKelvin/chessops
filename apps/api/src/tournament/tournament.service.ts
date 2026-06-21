@@ -21,6 +21,8 @@ export class TournamentService {
         name: data.name,
         description: data.description,
         location: data.location,
+        country: data.country,
+        countryName: data.countryName,
         startDate: new Date(data.startDate),
         endDate: data.endDate ? new Date(data.endDate) : null,
         status: data.status || 'draft',
@@ -110,6 +112,9 @@ export class TournamentService {
       where: { id },
       include: {
         players: {
+          include: { player: true },
+        },
+        admins: {
           include: { player: true },
         },
         rounds: {
@@ -460,6 +465,7 @@ export class TournamentService {
     });
 
     const standings = players.map((p: any) => ({
+      rank: 0,
       playerId: p.playerId,
       name: `${p.player.firstName} ${p.player.lastName}`,
       seed: p.seed,
@@ -469,6 +475,17 @@ export class TournamentService {
         0,
       ),
       games: p.results.length,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      tiebreaks: {
+        buchholz: 0,
+        buchholzMedian: 0,
+        sonnebornBerger: 0,
+        directEncounter: undefined,
+        progressScore: 0,
+        averageOpponentRating: 0,
+      },
       status: p.status,
     }));
 
@@ -477,6 +494,8 @@ export class TournamentService {
       if (b.points !== a.points) return b.points - a.points;
       return a.seed - b.seed;
     });
+
+    standings.forEach((s: any, i: number) => (s.rank = i + 1));
 
     return standings;
   }

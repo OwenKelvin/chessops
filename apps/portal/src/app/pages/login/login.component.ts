@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
   FieldTree,
@@ -188,14 +188,24 @@ interface LoginModel {
     </div>
   `,
 })
-export class LoginPageComponent {
+export class LoginPageComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private backendUrl = injectBackendUrl();
   private notification = inject(NotificationService);
   private auth = inject(AuthService);
 
+  returnUrl = signal('/account');
+
   loginFormValue = signal<LoginModel>({ email: '', password: '', rememberMe: false });
+
+  ngOnInit(): void {
+    const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+    if (returnUrl) {
+      this.returnUrl.set(returnUrl);
+    }
+  }
 
   submitForm = async (field: FieldTree<LoginModel>) => {
     try {
@@ -203,12 +213,12 @@ export class LoginPageComponent {
         this.http.post<AuthTokens>(`${this.backendUrl}/api/auth/login`, {
           email: field.email().value(),
           password: field.password().value(),
-          rememberMe: field.rememberMe().value(),
         }),
       );
       await this.auth.storeTokens(result);
+      await this.auth.loadUser();
       this.notification.success('Signed in successfully.');
-      this.router.navigate(['/account']);
+      this.router.navigateByUrl(this.returnUrl());
       return undefined as TreeValidationResult;
     } catch (err: any) {
       const message = err.error?.message || 'Login failed';

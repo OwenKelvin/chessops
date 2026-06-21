@@ -15,6 +15,12 @@
     </a>
     <nav class="header-nav">
       <a routerLink="/" class="nav-link">Tournaments</a>
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/account" class="nav-link">Account</a>
+        <button type="button" (click)="logout()" class="nav-link">Sign out</button>
+      } @else {
+        <a routerLink="/login" class="nav-link">Sign in</a>
+      }
       <a routerLink="/tournaments/create" class="btn btn-primary btn-sm">Create Tournament</a>
       <chessops-theme-toggle />
     </nav>

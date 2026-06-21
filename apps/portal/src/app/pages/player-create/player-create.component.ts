@@ -202,7 +202,7 @@ export class PlayerCreateComponent {
     lastName: '',
     email: '',
     fideId: '',
-    rating: 5,
+    rating: 0,
     dateOfBirth: '',
     gender: '',
     country: '',
@@ -212,9 +212,13 @@ export class PlayerCreateComponent {
     fieldTree: FieldTree<CreatePlayerDto>,
   ): Promise<TreeValidationResult | undefined> => {
     const data = fieldTree().value();
+    const payload = {
+      ...data,
+      rating: data.rating ? Number(data.rating) : 0,
+    };
     try {
       await lastValueFrom(
-        this.http.post(`${this.backendUrl}/api/players`, data),
+        this.http.post(`${this.backendUrl}/api/players`, payload),
       );
       this.notification.success('Player created successfully.');
       this.router.navigate(['/']);

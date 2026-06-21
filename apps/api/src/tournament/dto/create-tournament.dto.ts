@@ -12,6 +12,14 @@ export class CreateTournamentDto {
   @IsString()
   location?: string;
 
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  countryName?: string;
+
   @IsDateString()
   startDate!: string;
 
@@ -62,6 +70,14 @@ export class UpdateTournamentDto {
   @IsOptional()
   @IsString()
   location?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  countryName?: string;
 
   @IsOptional()
   @IsDateString()

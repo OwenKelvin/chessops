@@ -29,6 +29,10 @@ export class CreatePlayerDto {
   dateOfBirth?: string;
 
   @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
   @IsIn(['M', 'F', 'O'])
   gender?: string;
 }

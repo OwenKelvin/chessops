@@ -191,12 +191,26 @@ model Tournament {
 
   owner       User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   players     TournamentPlayer[]
+  admins      TournamentAdmin[]
   rounds      Round[]
 
   @@index([ownerId])
   @@index([status])
   @@index([startDate])
   @@index([country])
+}
+
+model TournamentAdmin {
+  id            String   @id @default(cuid())
+  tournamentId  String
+  playerId      String
+  createdAt     DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player   Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId])
 }
 
 model TournamentPlayer {
@@ -234,6 +248,7 @@ model Player {
 
   owner         User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   tournaments   TournamentPlayer[]
+  tournamentAdmins TournamentAdmin[]
   pairingsWhite Pairing[]        @relation("PairingWhite")
   pairingsBlack Pairing[]        @relation("PairingBlack")
 

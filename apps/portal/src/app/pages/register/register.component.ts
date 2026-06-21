@@ -357,6 +357,7 @@ export class RegisterPageComponent {
         }),
       );
       await this.auth.storeTokens(result);
+      await this.auth.loadUser();
       this.notification.success('Account created successfully.');
       this.router.navigate(['/account']);
       return undefined as TreeValidationResult;

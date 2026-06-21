@@ -7,10 +7,11 @@ import {
   ChangeDetectionStrategy,
   resource,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+import { lastValueFrom, map } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
 import { InputComponent } from '@chessops/ui/input';
 import { CardComponent } from '@chessops/ui/card';
@@ -222,6 +223,8 @@ export class TournamentAdminsComponent {
   private backendUrl = injectBackendUrl();
   private notification = inject(NotificationService);
 
+  private routeId = toSignal(this.route.paramMap.pipe(map((m) => m.get('id'))));
+
   tournamentId = signal<string | null>(null);
   tournament = signal<Tournament | null>(null);
   admins = signal<TournamentAdmin[]>([]);
@@ -274,31 +277,39 @@ export class TournamentAdminsComponent {
       const id = this.tournamentId();
       if (!id) return [];
       return await lastValueFrom(
-        this.http.get<TournamentPlayer[]>(
-          `${this.backendUrl}/api/tournaments/${id}/players`,
+        this.http.get<{ players: TournamentPlayer[] }>(
+          `${this.backendUrl}/api/tournaments/${id}`,
         ),
-      );
+      ).then((res) => res.players ?? []);
     },
   });
 
   constructor() {
     effect(() => {
-      const id = this.route.snapshot.paramMap.get('id');
-      this.tournamentId.set(id);
+      const id = this.routeId();
+      this.tournamentId.set(id ?? null);
     });
 
     effect(() => {
       const data = this.tournamentResource.value();
       if (data) {
         this.tournament.set(data);
-        this.loading.set(false);
       }
+      this.loading.set(this.tournamentResource.isLoading());
     });
 
     effect(() => {
       const data = this.adminsResource.value();
       if (data) {
         this.admins.set(data);
+      }
+    });
+
+    effect(() => {
+      const err = this.tournamentResource.error();
+      if (err) {
+        this.error.set('Failed to load tournament');
+        this.loading.set(false);
       }
     });
 

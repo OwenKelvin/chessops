@@ -1,7 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { AuthService, User } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import {
   FieldTree,
   FormField,
@@ -231,7 +231,7 @@ export class AccountPageComponent implements OnInit {
     },
   );
 
-  user = signal<User | null>(null);
+  user = this.auth.currentUser;
   mfaEnabled = signal<boolean | null>(null);
   passwordMessage = signal('');
   passwordMessageClass = signal('text-sm');
@@ -242,20 +242,7 @@ export class AccountPageComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadUser();
     this.checkMfaStatus();
-  }
-
-  async loadUser() {
-    try {
-      const response = await firstValueFrom(
-        this.http.get<User>(`${this.backendUrl}/api/auth/me`),
-      );
-      this.user.set(response);
-    } catch {
-      await this.auth.logout();
-      this.router.navigate(['/login']);
-    }
   }
 
   async checkMfaStatus() {
