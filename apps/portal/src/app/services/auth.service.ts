@@ -1,9 +1,10 @@
-import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
+import { Service, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
 import { StorageService } from './storage.service';
+import { SKIP_AUTH } from './auth-context';
 
 export interface User {
   id: string;
@@ -18,7 +19,7 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AuthService {
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
@@ -74,16 +75,7 @@ export class AuthService {
   }
 
   private async fetchUser(): Promise<User> {
-    return firstValueFrom(
-      this.http.get<User>(`${this.backendUrl}/api/auth/me`, {
-        headers: await this.authHeaders(),
-      }),
-    );
-  }
-
-  private async authHeaders(): Promise<Record<string, string>> {
-    const accessToken = await this.storage.getAccessToken();
-    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+    return firstValueFrom(this.http.get<User>(`${this.backendUrl}/api/auth/me`));
   }
 
   async storeTokens(tokens: AuthTokens): Promise<void> {
@@ -127,6 +119,7 @@ export class AuthService {
           this.http.post<AuthTokens>(
             `${this.backendUrl}/api/auth/token/refresh`,
             { refreshToken },
+            { context: new HttpContext().set(SKIP_AUTH, true) },
           ),
         );
       })

@@ -1,9 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Preferences } from '@capacitor/preferences';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class StorageService {
   private readonly ACCESS_TOKEN_KEY = 'auth_access_token';
   private readonly REFRESH_TOKEN_KEY = 'auth_refresh_token';

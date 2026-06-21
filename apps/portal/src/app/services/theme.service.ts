@@ -1,11 +1,17 @@
-import { Injectable, signal, computed, PLATFORM_ID, inject } from '@angular/core';
+import {
+  signal,
+  computed,
+  PLATFORM_ID,
+  inject,
+  Service,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 export type AppTheme = 'dark' | 'light';
 
 const STORAGE_KEY = 'chessops-theme';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ThemeService {
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);

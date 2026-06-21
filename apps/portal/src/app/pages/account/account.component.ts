@@ -197,7 +197,6 @@ export class AccountPageComponent implements OnInit {
             currentPassword: field.currentPassword().value(),
             newPassword: field.newPassword().value(),
           },
-          { headers: await this.authHeaders() },
         ),
       );
       this.passwordMessage.set('Password updated successfully');
@@ -250,9 +249,7 @@ export class AccountPageComponent implements OnInit {
   async loadUser() {
     try {
       const response = await firstValueFrom(
-        this.http.get<User>(`${this.backendUrl}/api/auth/me`, {
-          headers: await this.authHeaders(),
-        }),
+        this.http.get<User>(`${this.backendUrl}/api/auth/me`),
       );
       this.user.set(response);
     } catch {
@@ -264,19 +261,12 @@ export class AccountPageComponent implements OnInit {
   async checkMfaStatus() {
     try {
       const response = await firstValueFrom(
-        this.http.get<{ enabled: boolean }>(`${this.backendUrl}/api/mfa/status`, {
-          headers: await this.authHeaders(),
-        }),
+        this.http.get<{ enabled: boolean }>(`${this.backendUrl}/api/mfa/status`),
       );
       this.mfaEnabled.set(response.enabled);
     } catch {
       this.mfaEnabled.set(false);
     }
-  }
-
-  private async authHeaders(): Promise<Record<string, string>> {
-    const token = await this.auth.getAccessToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   enableMfa() {
@@ -289,11 +279,7 @@ export class AccountPageComponent implements OnInit {
 
     try {
       await firstValueFrom(
-        this.http.post(
-          `${this.backendUrl}/api/mfa/disable`,
-          { token: code },
-          { headers: await this.authHeaders() },
-        ),
+        this.http.post(`${this.backendUrl}/api/mfa/disable`, { token: code }),
       );
       this.mfaEnabled.set(false);
       this.passwordMessage.set('MFA disabled successfully');
@@ -312,11 +298,7 @@ export class AccountPageComponent implements OnInit {
 
     try {
       await firstValueFrom(
-        this.http.post(
-          `${this.backendUrl}/api/auth/revoke-sessions`,
-          {},
-          { headers: await this.authHeaders() },
-        ),
+        this.http.post(`${this.backendUrl}/api/auth/revoke-sessions`, {}),
       );
       this.notification.success('Signed out of all other sessions.');
       await this.auth.logout();
@@ -329,11 +311,7 @@ export class AccountPageComponent implements OnInit {
   async logout() {
     try {
       await firstValueFrom(
-        this.http.post(
-          `${this.backendUrl}/api/auth/logout`,
-          {},
-          { headers: await this.authHeaders() },
-        ),
+        this.http.post(`${this.backendUrl}/api/auth/logout`, {}),
       );
       this.notification.success('Signed out successfully.');
     } catch {

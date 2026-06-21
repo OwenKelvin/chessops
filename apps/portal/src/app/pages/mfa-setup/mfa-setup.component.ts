@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../services/auth.service';
 import {
   FieldTree,
   form,
@@ -147,7 +146,6 @@ export class MfaSetupPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
   private backendUrl = injectBackendUrl();
-  private auth = inject(AuthService);
 
   verifyFormValue = signal<MfaVerifyModel>({ token: '' });
 
@@ -158,9 +156,6 @@ export class MfaSetupPageComponent {
           `${this.backendUrl}/api/mfa/enable`,
           {
             token: field.token().value(),
-          },
-          {
-            headers: await this.authHeaders(),
           },
         ),
       );
@@ -200,17 +195,10 @@ export class MfaSetupPageComponent {
     this.loadMfaSetup();
   }
 
-  private async authHeaders(): Promise<Record<string, string>> {
-    const token = await this.auth.getAccessToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }
-
   async loadMfaSetup() {
     try {
       const response = await firstValueFrom(
-        this.http.get(`${this.backendUrl}/api/mfa/setup`, {
-          headers: await this.authHeaders(),
-        }),
+        this.http.get(`${this.backendUrl}/api/mfa/setup`),
       );
       this.qrCodeUrl.set((response as any).qrCodeUrl);
       this.secret.set((response as any).secret);
