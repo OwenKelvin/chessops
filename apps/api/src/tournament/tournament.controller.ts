@@ -111,13 +111,6 @@ export class TournamentController {
     return this.tournamentService.withdrawPlayer(tournamentId, playerId, body.roundNumber);
   }
 
-  // Standings
-  @Get(':id/standings')
-  async getStandings(@Param('id') id: string) {
-    const standings = await this.tournamentService.getStandings(id);
-    return { standings };
-  }
-
   // Round management - all require auth
   @Post(':id/rounds')
   @UseGuards(JwtAuthGuard)
