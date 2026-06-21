@@ -110,6 +110,13 @@
         "cwd": "{workspaceRoot}"
       }
     },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bash apps/api/e2e/smoke-test.sh",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "@nx/angular:ng-packagr-lite": {
       "cache": true,
       "dependsOn": ["^build"],

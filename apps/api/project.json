@@ -86,6 +86,13 @@
       "dependsOn": ["build", "prune"],
       "command": "docker build -f apps/api/Dockerfile . -t chessops-api"
     },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bash apps/api/e2e/smoke-test.sh",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "test": {
       "executor": "@nx/vitest:test",
       "outputs": ["{options.reportsDirectory}"],
