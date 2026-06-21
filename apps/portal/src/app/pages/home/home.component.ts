@@ -598,7 +598,9 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    // no-op: all setup happens in constructor
+  }
 
   getCountryFlag(countryCode?: string): string {
     if (!countryCode || countryCode.length !== 2) return '🌐';

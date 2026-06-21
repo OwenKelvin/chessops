@@ -54,6 +54,7 @@
     "@angular/cli": "~22.0.3",
     "@angular/compiler-cli": "~22.0.2",
     "@angular/language-service": "~22.0.2",
+    "@angular/platform-browser-dynamic": "^22.0.2",
     "@angular/ssr": "^22.0.3",
     "@eslint/js": "^10.0.1",
     "@fastify/cookie": "^11.0.2",
@@ -113,6 +114,7 @@
     "vitest": "^4.1.9",
     "webpack": "5.107.2",
     "webpack-cli": "7.0.3",
-    "webpack-dev-server": "5.2.5"
+    "webpack-dev-server": "5.2.5",
+    "zone.js": "^0.16.2"
   }
 }

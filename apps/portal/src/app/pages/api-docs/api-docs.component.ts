@@ -21,16 +21,18 @@ import {
 
           @for (section of sections; track section.id) {
             <div class="mb-4">
-              <h3
-                class="text-xs font-semibold uppercase tracking-wide text-muted cursor-pointer flex justify-between items-center py-2"
+              <button
+                type="button"
+                class="text-xs font-semibold uppercase tracking-wide text-muted cursor-pointer flex justify-between items-center py-2 w-full text-left"
                 (click)="toggleSection(section.id)"
+                (keydown.enter)="toggleSection(section.id)"
               >
                 {{ section.title }}
                 <span
                   class="text-[0.625rem] transition-transform duration-200"
                   [class.rotate-180]="expandedSections.has(section.id)"
                 >▼</span>
-              </h3>
+              </button>
 
               @if (expandedSections.has(section.id)) {
                 <ul class="list-none p-0 mt-2 ml-3 space-y-1">

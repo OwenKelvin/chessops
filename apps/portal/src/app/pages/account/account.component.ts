@@ -183,6 +183,8 @@ export class AccountPageComponent implements OnInit {
   private backendUrl = injectBackendUrl();
   private notification = inject(NotificationService);
   private auth = inject(AuthService);
+  private http = inject(HttpClient);
+  private router = inject(Router);
   passwordFormValue = signal<PasswordChangeModel>({
     currentPassword: '',
     newPassword: '',
@@ -235,11 +237,6 @@ export class AccountPageComponent implements OnInit {
   mfaEnabled = signal<boolean | null>(null);
   passwordMessage = signal('');
   passwordMessageClass = signal('text-sm');
-
-  constructor(
-    private http: HttpClient,
-    private router: Router,
-  ) {}
 
   ngOnInit() {
     this.checkMfaStatus();

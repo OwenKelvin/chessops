@@ -16,6 +16,11 @@ export class App implements OnInit {
   protected auth = inject(AuthService);
   protected title = 'portal';
 
+  ngOnInit(): void {
+    this.themeService.initialize();
+  }
+
   async logout(): Promise<void> {
     await this.auth.logout();
   }
+}

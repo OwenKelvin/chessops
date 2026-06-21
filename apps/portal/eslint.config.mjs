@@ -1,5 +1,5 @@
 import nx from '@nx/eslint-plugin';
-import baseConfig from '../../../eslint.config.mjs';
+import baseConfig from './../../eslint.config.mjs';
 
 export default [
   ...nx.configs['flat/angular'],
@@ -20,15 +20,18 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'app',
+          prefix: ['app', 'chessops'],
           style: 'kebab-case',
         },
       ],
+      '@angular-eslint/no-empty-lifecycle-method': 'off',
+      '@typescript-eslint/no-empty-function': ['warn', { allow: ['arrowFunctions', 'constructors'] }],
     },
   },
   {
     files: ['**/*.html'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      '@angular-eslint/template/label-has-associated-control': 'off',
+    },
   },
 ];

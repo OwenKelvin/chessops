@@ -9,13 +9,13 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom, map } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
 import { NotificationService } from '../../services/notification.service';
 import { InputComponent } from '@chessops/ui/input';
-import { ButtonComponent } from '@chessops/ui/button';
+
 import { CardComponent } from '@chessops/ui/card';
 import { BadgeComponent } from '@chessops/ui/badge';
 import { form, FormField } from '@angular/forms/signals';
