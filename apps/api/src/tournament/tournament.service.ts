@@ -114,9 +114,6 @@ export class TournamentService {
         players: {
           include: { player: true },
         },
-        admins: {
-          include: { player: true },
-        },
         rounds: {
           include: {
             pairings: {
@@ -291,22 +288,37 @@ export class TournamentService {
 
   // Round management
   async createRound(tournamentId: string, roundNumber: number, name?: string) {
-    const round = await this.prisma.round.create({
-      data: {
+    try {
+      const round = await this.prisma.round.create({
+        data: {
+          tournamentId,
+          roundNumber,
+          name,
+          status: 'pending',
+        },
+      });
+
+      await this.webhookService.publish(WebhookEvents.ROUND_CREATED, {
         tournamentId,
+        roundId: round.id,
         roundNumber,
-        name,
-        status: 'pending',
-      },
-    });
+      });
 
-    await this.webhookService.publish(WebhookEvents.ROUND_CREATED, {
-      tournamentId,
-      roundId: round.id,
-      roundNumber,
-    });
-
-    return round;
+      return round;
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        const existing = await this.prisma.round.findUnique({
+          where: {
+            tournamentId_roundNumber: {
+              tournamentId,
+              roundNumber,
+            },
+          },
+        });
+        if (existing) return existing;
+      }
+      throw err;
+    }
   }
 
   async publishRound(tournamentId: string, roundId: string) {

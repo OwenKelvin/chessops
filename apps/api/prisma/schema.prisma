@@ -241,6 +241,7 @@ model Player {
   fideId        String?  // FIDE ID
   nationalId    String?
   rating        Int      @default(0)
+  country       String?
   dateOfBirth   DateTime?
   gender        String?  // M, F, O
   createdAt     DateTime @default(now())

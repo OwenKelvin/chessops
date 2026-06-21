@@ -2,15 +2,10 @@ import {
   Controller,
   Get,
   Param,
-  UseGuards,
-  Req,
-  Query,
 } from '@nestjs/common';
 import { TiebreakService } from './tiebreak.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('tournaments/:tournamentId/standings')
-@UseGuards(JwtAuthGuard)
 export class TiebreakController {
   constructor(private tiebreakService: TiebreakService) {}
 
