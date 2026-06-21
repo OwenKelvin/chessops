@@ -12,7 +12,6 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   const clonedReq = req.clone({
     url: apiUrl,
-    withCredentials: true,
   });
 
   return next(clonedReq);

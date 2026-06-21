@@ -15,6 +15,8 @@ import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { NotificationService } from '../../services/notification.service';
+import { FormErrorComponent } from '../../components/form-error/form-error.component';
 
 interface ForgotPasswordModel {
   email: string;
@@ -29,6 +31,7 @@ interface ForgotPasswordModel {
     InputComponent,
     ButtonComponent,
     CardComponent,
+    FormErrorComponent,
   ],
   template: `
     <div
@@ -67,6 +70,8 @@ interface ForgotPasswordModel {
                 </div>
               }
 
+              <chessops-form-error [message]="errorMessage()" />
+
               <chessops-button
                 type="submit"
                 variant="primary"
@@ -98,6 +103,7 @@ interface ForgotPasswordModel {
 export class RecoveryPageComponent {
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
   forgotFormValue = signal<ForgotPasswordModel>({ email: '' });
 
   submitForm = async (field: FieldTree<ForgotPasswordModel>) => {
@@ -109,12 +115,17 @@ export class RecoveryPageComponent {
       );
       if (result) {
         this.success.set(true);
+        this.notification.success(
+          'If an account exists with that email, a reset link has been sent.',
+        );
       }
       return undefined as TreeValidationResult;
     } catch (err: any) {
+      const message = err.error?.message || 'Request failed';
+      this.notification.error(message);
       return {
         kind: 'server',
-        message: err.error?.message || 'Request failed',
+        message,
       } as TreeValidationResult;
     }
   };

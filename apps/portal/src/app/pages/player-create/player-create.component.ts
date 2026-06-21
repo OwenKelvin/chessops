@@ -22,6 +22,8 @@ import { injectBackendUrl } from '@chessops/core/providers';
 import { InputComponent } from '@chessops/ui/input';
 import { SelectComponent, type SelectOption } from '@chessops/ui/select';
 import { CardComponent } from '@chessops/ui/card';
+import { NotificationService } from '../../services/notification.service';
+import { FormErrorComponent } from '../../components/form-error/form-error.component';
 
 interface Country {
   id: string;
@@ -53,6 +55,7 @@ interface CreatePlayerDto {
     InputComponent,
     SelectComponent,
     CardComponent,
+    FormErrorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -142,10 +145,8 @@ interface CreatePlayerDto {
             </section>
 
             <!-- Actions -->
-            <div class="flex flex-col gap-2 sm:gap-3 pt-2">
-              @if (error()) {
-                <p class="text-xs sm:text-sm text-error">{{ error() }}</p>
-              }
+            <div class="flex flex-col gap-3 pt-2">
+              <chessops-form-error [message]="playerForm().errors()[0]?.message" />
               <button
                 type="submit"
                 [disabled]="
@@ -170,6 +171,7 @@ export class PlayerCreateComponent {
   private router = inject(Router);
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
 
   protected countriesResource = resource({
     loader: () =>
@@ -214,12 +216,16 @@ export class PlayerCreateComponent {
       await lastValueFrom(
         this.http.post(`${this.backendUrl}/api/players`, data),
       );
+      this.notification.success('Player created successfully.');
       this.router.navigate(['/']);
       return undefined;
     } catch (err: any) {
+      const message =
+        err.error?.message || 'Failed to create player. Please try again.';
+      this.notification.error(message);
       return {
         kind: 'server',
-        message: err.error?.message || 'Failed to create player',
+        message,
       } as TreeValidationResult;
     }
   };
@@ -238,5 +244,4 @@ export class PlayerCreateComponent {
   );
 
   protected submitting = computed(() => this.playerForm().submitting());
-  protected error = signal('');
 }

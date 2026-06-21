@@ -1,6 +1,7 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { AuthService, User } from '../../services/auth.service';
 import {
   FieldTree,
   FormField,
@@ -15,6 +16,8 @@ import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { NotificationService } from '../../services/notification.service';
+import { FormErrorComponent } from '../../components/form-error/form-error.component';
 
 interface PasswordChangeModel {
   currentPassword: string;
@@ -29,6 +32,7 @@ interface PasswordChangeModel {
     InputComponent,
     ButtonComponent,
     CardComponent,
+    FormErrorComponent,
   ],
   template: `
     <div class="min-h-screen bg-surface py-12 px-4 sm:px-6 lg:px-8">
@@ -135,11 +139,7 @@ interface PasswordChangeModel {
               [formField]="passwordForm.newPassword"
             />
 
-            @if (passwordForm().errors().length > 0) {
-              <p class="text-sm text-error">
-                {{ passwordForm().errors()[0]?.message }}
-              </p>
-            }
+            <chessops-form-error [message]="passwordForm().errors()[0]?.message" />
 
             @if (passwordMessage()) {
               <p [class]="passwordMessageClass()">{{ passwordMessage() }}</p>
@@ -181,6 +181,8 @@ interface PasswordChangeModel {
 })
 export class AccountPageComponent implements OnInit {
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
+  private auth = inject(AuthService);
   passwordFormValue = signal<PasswordChangeModel>({
     currentPassword: '',
     newPassword: '',
@@ -195,15 +197,19 @@ export class AccountPageComponent implements OnInit {
             currentPassword: field.currentPassword().value(),
             newPassword: field.newPassword().value(),
           },
+          { headers: await this.authHeaders() },
         ),
       );
       this.passwordMessage.set('Password updated successfully');
       this.passwordMessageClass.set('text-sm text-green-600');
+      this.notification.success('Password updated successfully.');
       return undefined as TreeValidationResult;
     } catch (err: any) {
+      const message = err.error?.message || 'Failed to update password';
+      this.notification.error(message);
       return {
         kind: 'server',
-        message: err.error?.message || 'Failed to update password',
+        message,
       } as TreeValidationResult;
     }
   };
@@ -226,7 +232,7 @@ export class AccountPageComponent implements OnInit {
     },
   );
 
-  user = signal<{ email: string; displayName: string } | null>(null);
+  user = signal<User | null>(null);
   mfaEnabled = signal<boolean | null>(null);
   passwordMessage = signal('');
   passwordMessageClass = signal('text-sm');
@@ -241,90 +247,100 @@ export class AccountPageComponent implements OnInit {
     this.checkMfaStatus();
   }
 
-  loadUser() {
-    this.http
-      .get(`${this.backendUrl}/api/auth/me`, {
-        withCredentials: true,
-      })
-      .subscribe({
-        next: (response: any) => this.user.set(response),
-        error: () => this.router.navigate(['/login']),
-      });
+  async loadUser() {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<User>(`${this.backendUrl}/api/auth/me`, {
+          headers: await this.authHeaders(),
+        }),
+      );
+      this.user.set(response);
+    } catch {
+      await this.auth.logout();
+      this.router.navigate(['/login']);
+    }
   }
 
-  checkMfaStatus() {
-    this.http
-      .get(`${this.backendUrl}/api/mfa/status`, {
-        withCredentials: true,
-      })
-      .subscribe({
-        next: (response: any) => this.mfaEnabled.set(response.enabled),
-        error: () => this.mfaEnabled.set(false),
-      });
+  async checkMfaStatus() {
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ enabled: boolean }>(`${this.backendUrl}/api/mfa/status`, {
+          headers: await this.authHeaders(),
+        }),
+      );
+      this.mfaEnabled.set(response.enabled);
+    } catch {
+      this.mfaEnabled.set(false);
+    }
+  }
+
+  private async authHeaders(): Promise<Record<string, string>> {
+    const token = await this.auth.getAccessToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   enableMfa() {
     this.router.navigate(['/mfa-setup']);
   }
 
-  disableMfa() {
+  async disableMfa() {
     const code = prompt('Enter your 6-digit MFA code to disable:');
     if (!code) return;
 
-    this.http
-      .post(
-        `${this.backendUrl}/api/mfa/disable`,
-        { token: code },
-      )
-      .subscribe({
-        next: () => {
-          this.mfaEnabled.set(false);
-          this.passwordMessage.set('MFA disabled successfully');
-          this.passwordMessageClass.set('text-sm text-green-600');
-        },
-        error: (err) => {
-          this.passwordMessage.set(
-            err.error?.message || 'Failed to disable MFA',
-          );
-          this.passwordMessageClass.set('text-sm text-red-600');
-        },
-      });
+    try {
+      await firstValueFrom(
+        this.http.post(
+          `${this.backendUrl}/api/mfa/disable`,
+          { token: code },
+          { headers: await this.authHeaders() },
+        ),
+      );
+      this.mfaEnabled.set(false);
+      this.passwordMessage.set('MFA disabled successfully');
+      this.passwordMessageClass.set('text-sm text-green-600');
+      this.notification.success('MFA disabled successfully.');
+    } catch (err: any) {
+      const message = err.error?.message || 'Failed to disable MFA';
+      this.passwordMessage.set(message);
+      this.passwordMessageClass.set('text-sm text-red-600');
+      this.notification.error(message);
+    }
   }
 
-  revokeAllSessions() {
+  async revokeAllSessions() {
     if (!confirm('This will sign you out of all devices. Continue?')) return;
 
-    this.http
-      .post(
-        `${this.backendUrl}/api/auth/revoke-sessions`,
-        {},
-        {
-          withCredentials: true,
-        },
-      )
-      .subscribe({
-        next: () => {
-          this.router.navigate(['/login']);
-        },
-        error: () => {
-          this.passwordMessage.set('Failed to revoke sessions');
-          this.passwordMessageClass.set('text-sm text-red-600');
-        },
-      });
+    try {
+      await firstValueFrom(
+        this.http.post(
+          `${this.backendUrl}/api/auth/revoke-sessions`,
+          {},
+          { headers: await this.authHeaders() },
+        ),
+      );
+      this.notification.success('Signed out of all other sessions.');
+      await this.auth.logout();
+      this.router.navigate(['/login']);
+    } catch {
+      this.notification.error('Failed to revoke sessions.');
+    }
   }
 
-  logout() {
-    this.http
-      .post(`${this.backendUrl}/api/auth/logout`, {}, {
-        withCredentials: true,
-      })
-      .subscribe({
-        next: () => {
-          this.router.navigate(['/login']);
-        },
-        error: () => {
-          this.router.navigate(['/login']);
-        },
-      });
+  async logout() {
+    try {
+      await firstValueFrom(
+        this.http.post(
+          `${this.backendUrl}/api/auth/logout`,
+          {},
+          { headers: await this.authHeaders() },
+        ),
+      );
+      this.notification.success('Signed out successfully.');
+    } catch {
+      this.notification.error('Failed to sign out.');
+    } finally {
+      await this.auth.logout();
+      this.router.navigate(['/login']);
+    }
   }
 }

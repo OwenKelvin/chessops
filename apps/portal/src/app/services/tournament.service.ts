@@ -1,6 +1,7 @@
 import { Injectable, inject, resource, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from './auth.service';
 
 export interface Tournament {
   id: string;
@@ -122,11 +123,17 @@ export interface TournamentFilters {
 @Injectable({ providedIn: 'root' })
 export class TournamentService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
   readonly filters = signal<TournamentFilters>({});
+
+  private async authHeaders(): Promise<Record<string, string>> {
+    const token = await this.auth.getAccessToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
 
   readonly tournamentsResource = resource({
     params: () => this.filters(), // reactive dependency
-    loader: ({ params: filters }) => {
+    loader: async ({ params: filters }) => {
       let params = new HttpParams();
       if (filters.country) params = params.set('country', filters.country);
       if (filters.status) params = params.set('status', filters.status);
@@ -142,7 +149,7 @@ export class TournamentService {
       return firstValueFrom(
         this.http.get<{ tournaments: Tournament[]; total: number }>(
           `api/tournaments`,
-          { params },
+          { params, headers: await this.authHeaders() },
         ),
       );
     },
@@ -160,11 +167,15 @@ export class TournamentService {
   }
 
   async getTournament(id: string): Promise<Tournament> {
-    return firstValueFrom(this.http.get<Tournament>(`api/tournaments/${id}`));
+    return firstValueFrom(this.http.get<Tournament>(`api/tournaments/${id}`, {
+      headers: await this.authHeaders(),
+    }));
   }
 
   async createTournament(data: CreateTournamentDto): Promise<Tournament> {
-    return firstValueFrom(this.http.post<Tournament>(`api/tournaments`, data));
+    return firstValueFrom(this.http.post<Tournament>(`api/tournaments`, data, {
+      headers: await this.authHeaders(),
+    }));
   }
 
   async updateTournament(
@@ -172,12 +183,16 @@ export class TournamentService {
     data: Partial<CreateTournamentDto>,
   ): Promise<Tournament> {
     return firstValueFrom(
-      this.http.patch<Tournament>(`api/tournaments/${id}`, data),
+      this.http.patch<Tournament>(`api/tournaments/${id}`, data, {
+        headers: await this.authHeaders(),
+      }),
     );
   }
 
   async deleteTournament(id: string): Promise<void> {
-    return firstValueFrom(this.http.delete<void>(`api/tournaments/${id}`));
+    return firstValueFrom(this.http.delete<void>(`api/tournaments/${id}`, {
+      headers: await this.authHeaders(),
+    }));
   }
 
   async getStandings(
@@ -186,6 +201,7 @@ export class TournamentService {
     return firstValueFrom(
       this.http.get<{ standings: StandingsEntry[] }>(
         `api/tournaments/${tournamentId}/standings`,
+        { headers: await this.authHeaders() },
       ),
     );
   }
@@ -199,6 +215,7 @@ export class TournamentService {
       this.http.post<TournamentPlayer>(
         `api/tournaments/${tournamentId}/players`,
         { playerId, seed },
+        { headers: await this.authHeaders() },
       ),
     );
   }
@@ -207,6 +224,7 @@ export class TournamentService {
     return firstValueFrom(
       this.http.delete<void>(
         `api/tournaments/${tournamentId}/players/${playerId}`,
+        { headers: await this.authHeaders() },
       ),
     );
   }
@@ -220,6 +238,8 @@ export class TournamentService {
       this.http.post<void>(`api/tournaments/${tournamentId}/results`, {
         pairingId,
         result,
+      }, {
+        headers: await this.authHeaders(),
       }),
     );
   }
@@ -227,7 +247,9 @@ export class TournamentService {
   // Admin management
   async getAdmins(tournamentId: string): Promise<TournamentAdmin[]> {
     return firstValueFrom(
-      this.http.get<TournamentAdmin[]>(`api/tournaments/${tournamentId}/admins`),
+      this.http.get<TournamentAdmin[]>(`api/tournaments/${tournamentId}/admins`, {
+        headers: await this.authHeaders(),
+      }),
     );
   }
 
@@ -235,6 +257,8 @@ export class TournamentService {
     return firstValueFrom(
       this.http.post<void>(`api/tournaments/${tournamentId}/admins`, {
         playerId,
+      }, {
+        headers: await this.authHeaders(),
       }),
     );
   }
@@ -243,6 +267,7 @@ export class TournamentService {
     return firstValueFrom(
       this.http.delete<void>(
         `api/tournaments/${tournamentId}/admins/${playerId}`,
+        { headers: await this.authHeaders() },
       ),
     );
   }

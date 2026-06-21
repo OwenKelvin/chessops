@@ -14,6 +14,7 @@ import {
   FormField,
   FormRoot,
   required,
+  TreeValidationResult,
 } from '@angular/forms/signals';
 import {
   TournamentService,
@@ -25,6 +26,8 @@ import { CardComponent } from '@chessops/ui/card';
 import { injectBackendUrl } from '@chessops/core/providers';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
+import { NotificationService } from '../../services/notification.service';
+import { FormErrorComponent } from '../../components/form-error/form-error.component';
 
 const FORMAT_OPTIONS: SelectOption[] = [
   { value: 'swiss', label: 'Swiss System' },
@@ -51,6 +54,7 @@ interface Country {
     SelectComponent,
     CardComponent,
     FormRoot,
+    FormErrorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -198,10 +202,8 @@ interface Country {
             </section>
 
             <!-- Actions -->
-            <div class="flex flex-col gap-2 sm:gap-3 pt-2">
-              @if (error()) {
-                <p class="text-xs sm:text-sm text-error">{{ error() }}</p>
-              }
+            <div class="flex flex-col gap-3 pt-2">
+              <chessops-form-error [message]="tournamentForm().errors()[0]?.message" />
               <button
                 type="submit"
                 [disabled]="
@@ -262,6 +264,7 @@ export class TournamentCreateComponent {
   private router = inject(Router);
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
 
   protected countriesResource = resource({
     loader: () =>
@@ -298,7 +301,7 @@ export class TournamentCreateComponent {
 
   submitCreateTournament = async (
     fieldTree: FieldTree<CreateTournamentDto>,
-  ) => {
+  ): Promise<TreeValidationResult | undefined> => {
     const currentData = fieldTree().value();
     const countries = this.countriesResource.value() ?? [];
     const country = countries.find((c) => c.code === currentData.country);
@@ -306,10 +309,20 @@ export class TournamentCreateComponent {
       ...currentData,
       countryName: country?.name || '',
     };
-    const tournament = await this.tournamentService.createTournament(data);
-    await this.router.navigate(['/']);
 
-    return undefined;
+    try {
+      await this.tournamentService.createTournament(data);
+      this.notification.success('Tournament created successfully.');
+      await this.router.navigate(['/']);
+      return undefined;
+    } catch (err: any) {
+      const message =
+        err.error?.message ||
+        err.message ||
+        'Failed to create tournament. Please try again.';
+      this.notification.error(message);
+      return { kind: 'server', message } as TreeValidationResult;
+    }
   };
 
   protected tournamentForm = form(
@@ -327,5 +340,4 @@ export class TournamentCreateComponent {
 
   protected formatOptions = FORMAT_OPTIONS;
   protected submitting = computed(() => this.tournamentForm().submitting());
-  protected error = signal('');
 }

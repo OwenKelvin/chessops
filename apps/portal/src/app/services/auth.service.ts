@@ -1,15 +1,9 @@
-import {
-  Injectable,
-  inject,
-  signal,
-  computed,
-  DOCUMENT,
-  PLATFORM_ID,
-} from '@angular/core';
+import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { StorageService } from './storage.service';
 
 export interface User {
   id: string;
@@ -19,29 +13,41 @@ export interface User {
   role: string;
 }
 
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
-  private document = inject(DOCUMENT);
-  private platformId = inject(PLATFORM_ID); // ✅ Needed for platform checks
+  private storage = inject(StorageService);
+  private platformId = inject(PLATFORM_ID);
 
   private isBrowser = isPlatformBrowser(this.platformId);
   private isServer = isPlatformServer(this.platformId);
 
   private user = signal<User | null>(null);
   private loaded = signal(false);
-  private refreshPromise: Promise<{ accessToken: string } | void> | null = null;
+  private refreshPromise: Promise<AuthTokens | void> | null = null;
 
   readonly currentUser = computed(() => this.user());
   readonly isAuthenticated = computed(() => this.user() !== null);
   readonly isLoading = computed(() => !this.loaded());
 
+  getAccessToken(): Promise<string | null> {
+    return this.storage.getAccessToken();
+  }
+
   async loadUser(): Promise<void> {
-    // ✅ Skip auth entirely on the server — cookies aren't forwarded
-    //    unless you explicitly configure SSR transfer of auth headers.
-    //    Mark as loaded so guards/resolvers don't hang.
     if (this.isServer) {
+      this.loaded.set(true);
+      return;
+    }
+
+    const accessToken = await this.storage.getAccessToken();
+    if (!accessToken) {
       this.loaded.set(true);
       return;
     }
@@ -52,12 +58,12 @@ export class AuthService {
     } catch (err: any) {
       if (err?.status === 401) {
         try {
-          await this.refreshToken();
+          await this.refreshAccessToken();
           const user = await this.fetchUser();
           this.user.set(user);
         } catch {
           this.user.set(null);
-          this.clearAuthCookies(); // ✅ Extracted to a guarded helper
+          await this.storage.clearTokens();
         }
       } else {
         this.user.set(null);
@@ -70,13 +76,21 @@ export class AuthService {
   private async fetchUser(): Promise<User> {
     return firstValueFrom(
       this.http.get<User>(`${this.backendUrl}/api/auth/me`, {
-        withCredentials: true,
+        headers: await this.authHeaders(),
       }),
     );
   }
 
+  private async authHeaders(): Promise<Record<string, string>> {
+    const accessToken = await this.storage.getAccessToken();
+    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+  }
+
+  async storeTokens(tokens: AuthTokens): Promise<void> {
+    await this.storage.setTokens(tokens.accessToken, tokens.refreshToken);
+  }
+
   async ensureAuthenticated(): Promise<void> {
-    // ✅ No-op on the server — authentication requires browser cookies
     if (this.isServer) {
       return;
     }
@@ -86,30 +100,40 @@ export class AuthService {
     }
 
     if (this.isLoading()) {
-      await this.waitForLoad(); // ✅ Extracted to avoid raw setTimeout in SSR
+      await this.waitForLoad();
     }
 
     if (this.isAuthenticated()) {
       return;
     }
 
-    await this.refreshToken();
+    await this.refreshAccessToken();
     const user = await this.fetchUser();
     this.user.set(user);
   }
 
-  refreshToken(): Promise<{ accessToken: string }> {
+  refreshAccessToken(): Promise<AuthTokens> {
     if (this.refreshPromise) {
-      return this.refreshPromise as Promise<{ accessToken: string }>;
+      return this.refreshPromise as Promise<AuthTokens>;
     }
 
-    this.refreshPromise = firstValueFrom(
-      this.http.post<{ accessToken: string }>(
-        `${this.backendUrl}/api/auth/token/refresh`,
-        {},
-        { withCredentials: true },
-      ),
-    )
+    this.refreshPromise = this.storage
+      .getRefreshToken()
+      .then((refreshToken) => {
+        if (!refreshToken) {
+          throw new Error('No refresh token');
+        }
+        return firstValueFrom(
+          this.http.post<AuthTokens>(
+            `${this.backendUrl}/api/auth/token/refresh`,
+            { refreshToken },
+          ),
+        );
+      })
+      .then(async (tokens) => {
+        await this.storage.setTokens(tokens.accessToken, tokens.refreshToken);
+        return tokens;
+      })
       .catch((err) => {
         throw err;
       })
@@ -117,11 +141,9 @@ export class AuthService {
         this.refreshPromise = null;
       });
 
-    return this.refreshPromise as Promise<{ accessToken: string }>;
+    return this.refreshPromise as Promise<AuthTokens>;
   }
 
-  // ✅ setTimeout is browser-safe, but guard it anyway so the pattern
-  //    is explicit and won't hang if called unexpectedly on the server.
   private waitForLoad(): Promise<void> {
     return new Promise<void>((resolve) => {
       const poll = () => {
@@ -130,27 +152,17 @@ export class AuthService {
         } else if (this.isBrowser) {
           setTimeout(poll, 100);
         } else {
-          resolve(); // Don't hang on server
+          resolve();
         }
       };
       poll();
     });
   }
 
-  // ✅ Cookie manipulation is browser-only; document.cookie is a no-op
-  //    in Angular Universal's server DOM, but guard explicitly for clarity.
-  private clearAuthCookies(): void {
-    if (!this.isBrowser) return;
-    this.document.cookie =
-      'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    this.document.cookie =
-      'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-  }
-
-  logout(): void {
+  async logout(): Promise<void> {
     this.user.set(null);
     this.loaded.set(true);
-    this.clearAuthCookies();
+    await this.storage.clearTokens();
   }
 
   isOwner(ownerId: string): boolean {

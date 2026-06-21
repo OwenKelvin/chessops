@@ -1,4 +1,5 @@
 import { Route } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
 import { LoginPageComponent } from './pages/login/login.component';
 import { RegisterPageComponent } from './pages/register/register.component';
 import { RecoveryPageComponent } from './pages/recovery/recovery.component';
@@ -20,13 +21,33 @@ export const appRoutes: Route[] = [
   { path: 'register', component: RegisterPageComponent },
   { path: 'forgot-password', component: RecoveryPageComponent },
   { path: 'mfa-setup', component: MfaSetupPageComponent },
-  { path: 'account', component: AccountPageComponent },
+  { path: 'account', component: AccountPageComponent, canActivate: [authGuard] },
   { path: 'docs/api', component: ApiDocsComponent },
-  { path: 'tournaments/create', component: TournamentCreateComponent },
+  {
+    path: 'tournaments/create',
+    component: TournamentCreateComponent,
+    canActivate: [authGuard],
+  },
   { path: 'tournaments/:id', component: TournamentDetailComponent },
   { path: 'tournaments/:id/standings', component: TournamentStandingsComponent },
-  { path: 'tournaments/:id/manage', component: TournamentManageComponent },
-  { path: 'tournaments/:tournamentId/players', component: TournamentPlayersComponent },
-  { path: 'tournaments/:id/admins', component: TournamentAdminsComponent },
-  { path: 'players/create', component: PlayerCreateComponent },
+  {
+    path: 'tournaments/:id/manage',
+    component: TournamentManageComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'tournaments/:tournamentId/players',
+    component: TournamentPlayersComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'tournaments/:id/admins',
+    component: TournamentAdminsComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'players/create',
+    component: PlayerCreateComponent,
+    canActivate: [authGuard],
+  },
 ];

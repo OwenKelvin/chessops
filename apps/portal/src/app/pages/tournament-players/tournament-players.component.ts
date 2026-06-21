@@ -14,6 +14,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { NotificationService } from '../../services/notification.service';
 import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
@@ -333,6 +334,7 @@ export class TournamentPlayersComponent {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
 
   tournamentId = input<string | null>(null);
   tournament = signal<Tournament | null>(null);
@@ -447,7 +449,9 @@ export class TournamentPlayersComponent {
       );
       // Refresh tournament data
       this.playersResource.reload();
-    } catch (e) {
+      this.notification.success('Player added to tournament.');
+    } catch (e: any) {
+      this.notification.error(e.error?.message || 'Failed to add player.');
       console.error('Failed to add player', e);
     }
   }
@@ -464,7 +468,9 @@ export class TournamentPlayersComponent {
         ),
       );
       this.playersResource.reload();
-    } catch (e) {
+      this.notification.success('Player removed from tournament.');
+    } catch (e: any) {
+      this.notification.error(e.error?.message || 'Failed to remove player.');
       console.error('Failed to remove player', e);
     }
   }

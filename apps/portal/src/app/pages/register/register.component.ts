@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TitleCasePipe } from '@angular/common';
+import { AuthService, type AuthTokens } from '../../services/auth.service';
 import {
   FieldTree,
   form,
@@ -17,6 +18,8 @@ import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { SelectComponent, type SelectOption } from '@chessops/ui/select';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { NotificationService } from '../../services/notification.service';
+import { FormErrorComponent } from '../../components/form-error/form-error.component';
 
 interface RegisterModel {
   email: string;
@@ -53,6 +56,7 @@ interface Country {
     CardComponent,
     SelectComponent,
     TitleCasePipe,
+    FormErrorComponent,
   ],
   template: `
     <div
@@ -200,15 +204,8 @@ interface Country {
                   </div>
                 </div>
 
-                @if (registerForm().errors().length > 0) {
-                  <div
-                    class="bg-error-light border border-error/20 rounded-md p-3 text-center"
-                  >
-                    <span class="text-error text-sm font-medium">{{
-                      registerForm().errors()[0]?.message
-                    }}</span>
-                  </div>
-                }
+                <!-- Server error display -->
+                <chessops-form-error [message]="registerForm().errors()[0]?.message" />
 
                 <chessops-button
                   type="submit"
@@ -266,6 +263,8 @@ export class RegisterPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
   backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
+  private auth = inject(AuthService);
 
   countries = signal<Country[]>([]);
   isLoadingCountries = signal(true);
@@ -351,29 +350,30 @@ export class RegisterPageComponent {
   submitForm = async (field: FieldTree<RegisterModel>) => {
     try {
       const result = await firstValueFrom(
-        this.http.post(`api/auth/register`, {
+        this.http.post<AuthTokens>(`${this.backendUrl}/api/auth/register`, {
           email: field.email().value(),
           password: field.password().value(),
           displayName: field.displayName().value(),
         }),
       );
-      if (result) {
-        // Cookies are set by the server, just navigate to account page
-        this.router.navigate(['/account']);
-      }
+      await this.auth.storeTokens(result);
+      this.notification.success('Account created successfully.');
+      this.router.navigate(['/account']);
       return undefined as TreeValidationResult;
     } catch (err: any) {
-      if (/email/.test(err.error?.message?.toLowerCase())) {
+      const message = err.error?.message || 'Registration failed';
+      this.notification.error(message);
+      if (/email/.test(message.toLowerCase())) {
         return {
           fieldTree: field.email,
           kind: 'server',
-          message: err.error?.message || 'Registration failed',
+          message,
         } as TreeValidationResult;
       }
 
       return {
         kind: 'server',
-        message: err.error?.message || 'Registration failed',
+        message,
       } as TreeValidationResult;
     }
   };

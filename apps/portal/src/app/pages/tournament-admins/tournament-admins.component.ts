@@ -16,6 +16,7 @@ import { InputComponent } from '@chessops/ui/input';
 import { CardComponent } from '@chessops/ui/card';
 import { BadgeComponent } from '@chessops/ui/badge';
 import { TournamentService, type TournamentAdmin, type TournamentPlayer } from '../../services/tournament.service';
+import { NotificationService } from '../../services/notification.service';
 import { form, FormField } from '@angular/forms/signals';
 
 interface Tournament {
@@ -219,6 +220,7 @@ export class TournamentAdminsComponent {
   private http = inject(HttpClient);
   private tournamentService = inject(TournamentService);
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
 
   tournamentId = signal<string | null>(null);
   tournament = signal<Tournament | null>(null);
@@ -332,9 +334,12 @@ export class TournamentAdminsComponent {
       );
       this.adminsResource.reload();
       this.playersResource.reload();
-    } catch (e) {
+      this.notification.success('Admin assigned.');
+    } catch (e: any) {
+      const message = e.error?.message || 'Failed to assign admin';
       console.error('Failed to assign admin', e);
-      this.error.set('Failed to assign admin');
+      this.error.set(message);
+      this.notification.error(message);
     }
   }
 
@@ -351,9 +356,12 @@ export class TournamentAdminsComponent {
       );
       this.adminsResource.reload();
       this.playersResource.reload();
-    } catch (e) {
+      this.notification.success('Admin privileges revoked.');
+    } catch (e: any) {
+      const message = e.error?.message || 'Failed to revoke admin';
       console.error('Failed to revoke admin', e);
-      this.error.set('Failed to revoke admin');
+      this.error.set(message);
+      this.notification.error(message);
     }
   }
 }

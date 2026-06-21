@@ -8,10 +8,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  TournamentService,
+import { TournamentService,
   type Tournament,
 } from '../../services/tournament.service';
+import { NotificationService } from '../../services/notification.service';
 import { BadgeComponent } from '@chessops/ui/badge';
 import { CardComponent } from '@chessops/ui/card';
 
@@ -226,6 +226,7 @@ export class TournamentManageComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private tournamentService = inject(TournamentService);
+  private notification = inject(NotificationService);
 
   tournament = signal<Tournament | null>(null);
   loading = signal(false);
@@ -323,7 +324,13 @@ export class TournamentManageComponent implements OnInit {
       this.tournament.update((prev) =>
         prev ? { ...prev, registrationOpen: !prev.registrationOpen } : null,
       );
-    } catch (e) {
+      this.notification.success(
+        `Registration ${t.registrationOpen ? 'closed' : 'opened'}.`,
+      );
+    } catch (e: any) {
+      this.notification.error(
+        e.error?.message || 'Failed to update registration.',
+      );
       console.error('Failed to toggle registration', e);
     }
   }
@@ -338,7 +345,13 @@ export class TournamentManageComponent implements OnInit {
       this.tournament.update((prev) =>
         prev ? { ...prev, isPublic: !prev.isPublic } : null,
       );
-    } catch (e) {
+      this.notification.success(
+        `Tournament is now ${t.isPublic ? 'private' : 'public'}.`,
+      );
+    } catch (e: any) {
+      this.notification.error(
+        e.error?.message || 'Failed to update visibility.',
+      );
       console.error('Failed to toggle visibility', e);
     }
   }
@@ -354,8 +367,12 @@ export class TournamentManageComponent implements OnInit {
       return;
     try {
       await this.tournamentService.deleteTournament(t.id);
+      this.notification.success('Tournament deleted.');
       this.router.navigate(['/']);
-    } catch (e) {
+    } catch (e: any) {
+      this.notification.error(
+        e.error?.message || 'Failed to delete tournament.',
+      );
       console.error('Failed to delete tournament', e);
     }
   }

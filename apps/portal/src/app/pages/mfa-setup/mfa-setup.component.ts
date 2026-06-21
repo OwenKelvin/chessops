@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 import {
   FieldTree,
   form,
@@ -146,6 +147,7 @@ export class MfaSetupPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
   private backendUrl = injectBackendUrl();
+  private auth = inject(AuthService);
 
   verifyFormValue = signal<MfaVerifyModel>({ token: '' });
 
@@ -158,7 +160,7 @@ export class MfaSetupPageComponent {
             token: field.token().value(),
           },
           {
-            withCredentials: true,
+            headers: await this.authHeaders(),
           },
         ),
       );
@@ -198,20 +200,23 @@ export class MfaSetupPageComponent {
     this.loadMfaSetup();
   }
 
-  loadMfaSetup() {
-    this.http
-      .get(`${this.backendUrl}/api/mfa/setup`, {
-        withCredentials: true,
-      })
-      .subscribe({
-        next: (response: any) => {
-          this.qrCodeUrl.set(response.qrCodeUrl);
-          this.secret.set(response.secret);
-        },
-        error: () => {
-          alert('Failed to load MFA setup');
-        },
-      });
+  private async authHeaders(): Promise<Record<string, string>> {
+    const token = await this.auth.getAccessToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  async loadMfaSetup() {
+    try {
+      const response = await firstValueFrom(
+        this.http.get(`${this.backendUrl}/api/mfa/setup`, {
+          headers: await this.authHeaders(),
+        }),
+      );
+      this.qrCodeUrl.set((response as any).qrCodeUrl);
+      this.secret.set((response as any).secret);
+    } catch {
+      alert('Failed to load MFA setup');
+    }
   }
 
   finish() {

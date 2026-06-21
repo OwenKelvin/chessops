@@ -12,7 +12,7 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import { authInterceptor } from '@chessops/core/interceptors';
+import { errorInterceptor } from '@chessops/core/interceptors';
 import { provideClientHydration } from '@angular/platform-browser';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
@@ -23,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes, withComponentInputBinding()),
     provideBackendUrl('http://localhost:8082'),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([errorInterceptor])),
     provideAppInitializer(() => {
       const auth = inject(AuthService);
       const theme = inject(ThemeService);

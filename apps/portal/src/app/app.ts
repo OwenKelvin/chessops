@@ -2,9 +2,10 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { ThemeService } from './services/theme.service';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { ToastContainerComponent } from './components/toast-container/toast-container.component';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, ThemeToggleComponent],
+  imports: [RouterOutlet, RouterLink, ThemeToggleComponent, ToastContainerComponent],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',

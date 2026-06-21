@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -15,6 +15,9 @@ import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { CheckboxComponent } from '@chessops/ui/checkbox';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { NotificationService } from '../../services/notification.service';
+import { AuthService, type AuthTokens } from '../../services/auth.service';
+import { FormErrorComponent } from '../../components/form-error/form-error.component';
 
 interface LoginModel {
   email: string;
@@ -32,6 +35,7 @@ interface LoginModel {
     ButtonComponent,
     CardComponent,
     CheckboxComponent,
+    FormErrorComponent,
   ],
   template: `
     <div class="min-h-screen flex bg-gradient-to-br from-surface via-background to-surface-elevated">
@@ -110,11 +114,7 @@ interface LoginModel {
                 </a>
               </div>
 
-              @if (loginForm().errors().length > 0) {
-                <div class="bg-error-light border border-error/20 rounded-md p-3 text-center">
-                  <span class="text-error text-sm font-medium">{{ loginForm().errors()[0]?.message }}</span>
-                </div>
-              }
+              <chessops-form-error [message]="loginForm().errors()[0]?.message" />
 
               <chessops-button
                 type="submit"
@@ -191,28 +191,31 @@ interface LoginModel {
 export class LoginPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private backendUrl = injectBackendUrl()
+  private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
+  private auth = inject(AuthService);
 
   loginFormValue = signal<LoginModel>({ email: '', password: '', rememberMe: false });
 
   submitForm = async (field: FieldTree<LoginModel>) => {
     try {
       const result = await firstValueFrom(
-        this.http.post(`${this.backendUrl}/api/auth/login`, {
+        this.http.post<AuthTokens>(`${this.backendUrl}/api/auth/login`, {
           email: field.email().value(),
           password: field.password().value(),
           rememberMe: field.rememberMe().value(),
         }),
       );
-      if (result) {
-        // Cookies are set by the server, just navigate to account page
-        this.router.navigate(['/account']);
-      }
+      await this.auth.storeTokens(result);
+      this.notification.success('Signed in successfully.');
+      this.router.navigate(['/account']);
       return undefined as TreeValidationResult;
     } catch (err: any) {
+      const message = err.error?.message || 'Login failed';
+      this.notification.error(message);
       return {
         kind: 'server',
-        message: err.error?.message || 'Login failed',
+        message,
       } as TreeValidationResult;
     }
   };
