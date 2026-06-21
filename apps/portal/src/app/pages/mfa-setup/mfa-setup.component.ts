@@ -14,6 +14,7 @@ import { InputComponent } from '@chessops/ui/input';
 import { ButtonComponent } from '@chessops/ui/button';
 import { CardComponent } from '@chessops/ui/card';
 import { injectBackendUrl } from '@chessops/core/providers';
+import { NotificationService } from '../../services/notification.service';
 
 interface MfaVerifyModel {
   token: string;
@@ -146,6 +147,7 @@ export class MfaSetupPageComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
   private backendUrl = injectBackendUrl();
+  private notification = inject(NotificationService);
 
   verifyFormValue = signal<MfaVerifyModel>({ token: '' });
 
@@ -203,7 +205,7 @@ export class MfaSetupPageComponent {
       this.qrCodeUrl.set((response as any).qrCodeUrl);
       this.secret.set((response as any).secret);
     } catch {
-      alert('Failed to load MFA setup');
+      this.notification.error('Failed to load MFA setup. Please try again.');
     }
   }
 

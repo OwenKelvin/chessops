@@ -70,6 +70,14 @@
         "testTargetName": "test",
         "lintTargetName": "lint"
       }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "options": {
+        "testTargetName": "test",
+        "testMode": "watch"
+      },
+      "include": ["apps/api/**/*"]
     }
   ],
   "targetDefaults": {

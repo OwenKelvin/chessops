@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 export interface Tournament {
   id: string;
+  slug?: string;
   ownerId: string;
   name: string;
   description?: string;

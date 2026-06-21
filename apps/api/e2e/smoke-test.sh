@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# API smoke test: register, login, tournament, players, pairings, standings, admins.
+# API smoke test: register, login, tournament, players, pairings, results, standings, admins.
 # Usage: bash apps/api/e2e/smoke-test.sh [BASE_URL]
 # Requires: curl, jq
 
@@ -49,6 +49,12 @@ expect() {
   fi
 }
 
+json_get() {
+  local url="$1"
+  shift
+  curl -s "$url" "$@" | "$JQ" -c '. // empty'
+}
+
 echo "=== Register owner ($EMAIL) ==="
 OWNER=$(curl -s -X POST "$BASE/auth/register" -H "Content-Type: application/json" -d "{\"email\":\"$EMAIL\",\"password\":\"Password123!\",\"displayName\":\"Smoke Owner\"}")
 TOKEN=$(echo "$OWNER" | "$JQ" -r '.accessToken // empty')
@@ -58,9 +64,11 @@ AUTH="Authorization: Bearer $TOKEN"
 check "GET /auth/me" "$BASE/auth/me" -H "$AUTH"
 
 echo "=== Create tournament ==="
-TOUR=$(curl -s -X POST "$BASE/tournaments" -H "$AUTH" -H "Content-Type: application/json" -d '{"name":"Smoke Swiss","description":"Smoke test","location":"Nairobi","country":"KE","countryName":"Kenya","startDate":"2026-07-01","endDate":"2026-07-05","format":"swiss","maxRounds":3,"timeControl":"90+30","maxPlayers":8,"isPublic":true,"registrationOpen":true}')
+TOUR_PAYLOAD='{"name":"Smoke Swiss","description":"Smoke test","location":"Nairobi","country":"KE","countryName":"Kenya","startDate":"2026-07-01","endDate":"2026-07-05","format":"swiss","maxRounds":3,"timeControl":"90+30","maxPlayers":8,"isPublic":true,"registrationOpen":true}'
+TOUR=$(curl -s -X POST "$BASE/tournaments" -H "$AUTH" -H "Content-Type: application/json" -d "$TOUR_PAYLOAD")
 TOUR_ID=$(echo "$TOUR" | "$JQ" -r '.id')
-check "POST /tournaments" "$BASE/tournaments" -H "$AUTH" -H "Content-Type: application/json" -d '{"name":"Smoke Swiss","description":"Smoke test","location":"Nairobi","country":"KE","countryName":"Kenya","startDate":"2026-07-01","endDate":"2026-07-05","format":"swiss","maxRounds":3,"timeControl":"90+30","maxPlayers":8,"isPublic":true,"registrationOpen":true}'
+TOUR_SLUG=$(echo "$TOUR" | "$JQ" -r '.slug')
+check "POST /tournaments" "$BASE/tournaments" -H "$AUTH" -H "Content-Type: application/json" -d "$TOUR_PAYLOAD"
 
 echo "=== Create 4 players ==="
 PIDS=""
@@ -78,10 +86,30 @@ done
 
 echo "=== Generate Swiss pairings (auto-creates round 1) ==="
 check "POST /tournaments/$TOUR_ID/pairings/generate/swiss" "$BASE/tournaments/$TOUR_ID/pairings/generate/swiss" -H "$AUTH" -H "Content-Type: application/json" -d '{"roundNumber":1}'
+PAIRS=$(json_get "$BASE/tournaments/$TOUR_ID" -H "$AUTH")
+PAIRING_ID=$(echo "$PAIRS" | "$JQ" -r '.rounds[0].pairings[0].id // empty')
+[ -n "$PAIRING_ID" ] || { echo -e "$FAIL No pairings generated"; exit 1; }
 
-echo "=== Get tournament details and standings ==="
-check "GET /tournaments/$TOUR_ID" "$BASE/tournaments/$TOUR_ID"
-check "GET /tournaments/$TOUR_ID/standings" "$BASE/tournaments/$TOUR_ID/standings"
+echo "=== Submit all round 1 results ==="
+ROUND_ID=$(echo "$PAIRS" | "$JQ" -r '.rounds[0].id')
+for pairing in $(echo "$PAIRS" | "$JQ" -r '.rounds[0].pairings[] | @base64'); do
+  PID=$(echo "$pairing" | base64 -d | "$JQ" -r '.id')
+  check "POST /tournaments/$TOUR_ID/results" "$BASE/tournaments/$TOUR_ID/results" -H "$AUTH" -H "Content-Type: application/json" -d "{\"pairingId\":\"$PID\",\"result\":\"1-0\"}"
+done
+
+echo "=== Verify standings updated ==="
+STANDINGS=$(json_get "$BASE/tournaments/$TOUR_ID/standings")
+TOP_POINTS=$(echo "$STANDINGS" | "$JQ" -r '.standings[0].points // 0')
+if [ "${TOP_POINTS%.*}" -ge 1 ]; then
+  echo -e "$OK Standings updated (top points: $TOP_POINTS)"
+else
+  echo -e "$FAIL Standings not updated (top points: $TOP_POINTS)"
+  exit 1
+fi
+
+echo "=== Test slug-based lookups ==="
+check "GET /tournaments/$TOUR_SLUG" "$BASE/tournaments/$TOUR_SLUG"
+check "GET /tournaments/$TOUR_SLUG/standings" "$BASE/tournaments/$TOUR_SLUG/standings"
 
 echo "=== Assign admin and test unauthorized access ==="
 ADMIN_PID=$(echo "$PIDS" | awk '{print $2}')
@@ -101,5 +129,6 @@ check "GET /tournaments" "$BASE/tournaments"
 
 echo ""
 echo "=== Smoke test passed ==="
-echo "Tournament ID: $TOUR_ID"
+echo "Tournament ID:   $TOUR_ID"
+echo "Tournament slug: $TOUR_SLUG"
 echo "Players: $PIDS"

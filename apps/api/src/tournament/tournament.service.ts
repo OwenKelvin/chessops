@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { WebhookService } from '../webhook/webhook.service';
 import { WebhookEvents } from '../webhook/webhook.events';
+import slugify from 'slugify';
 
 @Injectable()
 export class TournamentService {
@@ -15,8 +16,10 @@ export class TournamentService {
   ) {}
 
   async create(userId: string, data: any) {
+    const baseSlug = slugify(data.name, { lower: true, strict: true, trim: true });
     const tournament = await this.prisma.tournament.create({
       data: {
+        slug: baseSlug,
         ownerId: userId,
         name: data.name,
         description: data.description,
@@ -40,6 +43,44 @@ export class TournamentService {
       name: tournament.name,
       ownerId: userId,
     });
+
+    // Ensure slug is unique by appending the id
+    if (tournament.slug && !tournament.slug.endsWith('-' + tournament.id)) {
+      const uniqueSlug = `${tournament.slug}-${tournament.id}`;
+      const updated = await this.prisma.tournament.update({
+        where: { id: tournament.id },
+        data: { slug: uniqueSlug },
+      });
+      return updated;
+    }
+
+    return tournament;
+  }
+
+  async findBySlug(slug: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { slug },
+      include: {
+        players: {
+          include: { player: true },
+        },
+        rounds: {
+          include: {
+            pairings: {
+              include: {
+                white: true,
+                black: true,
+              },
+            },
+          },
+          orderBy: { roundNumber: 'asc' },
+        },
+      },
+    });
+
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
 
     return tournament;
   }
@@ -135,7 +176,8 @@ export class TournamentService {
     return tournament;
   }
 
-  async update(id: string, userId: string, data: any) {
+  async update(idOrSlug: string, userId: string, data: any) {
+    const id = await this.resolveTournamentId(idOrSlug);
     const tournament = await this.prisma.tournament.findFirst({
       where: { id, ownerId: userId },
     });
@@ -175,7 +217,8 @@ export class TournamentService {
     return updated;
   }
 
-  async delete(id: string, userId: string) {
+  async delete(idOrSlug: string, userId: string) {
+    const id = await this.resolveTournamentId(idOrSlug);
     const tournament = await this.prisma.tournament.findFirst({
       where: { id, ownerId: userId },
     });
@@ -199,12 +242,27 @@ export class TournamentService {
   }
 
   // Player management
+  private async resolveTournamentId(idOrSlug: string) {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)) {
+      return idOrSlug;
+    }
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { slug: idOrSlug },
+      select: { id: true },
+    });
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+    return tournament.id;
+  }
+
   async addPlayer(
-    tournamentId: string,
+    tournamentIdOrSlug: string,
     playerId: string,
     seed?: number,
     rating?: number,
   ) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
     });
@@ -246,7 +304,8 @@ export class TournamentService {
     return player;
   }
 
-  async removePlayer(tournamentId: string, playerId: string, userId: string) {
+  async removePlayer(tournamentIdOrSlug: string, playerId: string, userId: string) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     await this.prisma.tournamentPlayer.deleteMany({
       where: { tournamentId, playerId },
     });
@@ -260,10 +319,11 @@ export class TournamentService {
   }
 
   async withdrawPlayer(
-    tournamentId: string,
+    tournamentIdOrSlug: string,
     playerId: string,
     roundNumber?: number,
   ) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     await this.prisma.tournamentPlayer.update({
       where: {
         tournamentId_playerId: {
@@ -287,7 +347,8 @@ export class TournamentService {
   }
 
   // Round management
-  async createRound(tournamentId: string, roundNumber: number, name?: string) {
+  async createRound(tournamentIdOrSlug: string, roundNumber: number, name?: string) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     try {
       const round = await this.prisma.round.create({
         data: {
@@ -321,27 +382,19 @@ export class TournamentService {
     }
   }
 
-  async publishRound(tournamentId: string, roundId: string) {
-    const round = await this.prisma.round.update({
-      where: { id: roundId },
+  async publishRound(tournamentIdOrSlug: string, roundId: string) {
+    return this.prisma.round.update({
+      where: { id: roundId, tournamentId: await this.resolveTournamentId(tournamentIdOrSlug) },
       data: {
         status: 'published',
         publishedAt: new Date(),
       },
     });
-
-    await this.webhookService.publish(WebhookEvents.ROUND_PUBLISHED, {
-      tournamentId,
-      roundId,
-      roundNumber: round.roundNumber,
-    });
-
-    return round;
   }
 
-  async completeRound(roundId: string) {
+  async completeRound(tournamentIdOrSlug: string, roundId: string) {
     const round = await this.prisma.round.update({
-      where: { id: roundId },
+      where: { id: roundId, tournamentId: await this.resolveTournamentId(tournamentIdOrSlug) },
       data: {
         status: 'completed',
         completedAt: new Date(),
@@ -350,7 +403,7 @@ export class TournamentService {
 
     await this.webhookService.publish(WebhookEvents.ROUND_COMPLETED, {
       roundId,
-      tournamentId: round.tournamentId,
+      tournamentId: await this.resolveTournamentId(tournamentIdOrSlug),
       roundNumber: round.roundNumber,
     });
 
@@ -467,7 +520,8 @@ export class TournamentService {
     return pairing;
   }
 
-  async getStandings(tournamentId: string) {
+  async getStandings(tournamentIdOrSlug: string) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     const players = await this.prisma.tournamentPlayer.findMany({
       where: { tournamentId },
       include: {
@@ -513,7 +567,8 @@ export class TournamentService {
   }
 
   // Admin management
-  async assignAdmin(tournamentId: string, playerId: string, userId: string) {
+  async assignAdmin(tournamentIdOrSlug: string, playerId: string, userId: string) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
     });
@@ -557,7 +612,8 @@ export class TournamentService {
     return { success: true };
   }
 
-  async revokeAdmin(tournamentId: string, playerId: string, userId: string) {
+  async revokeAdmin(tournamentIdOrSlug: string, playerId: string, userId: string) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     const tournamentPlayer = await this.prisma.tournamentPlayer.findUnique({
       where: {
         tournamentId_playerId: {
@@ -592,7 +648,8 @@ export class TournamentService {
     return { success: true };
   }
 
-  async getAdmins(tournamentId: string) {
+  async getAdmins(tournamentIdOrSlug: string) {
+    const tournamentId = await this.resolveTournamentId(tournamentIdOrSlug);
     const admins = await this.prisma.tournamentPlayer.findMany({
       where: {
         tournamentId,

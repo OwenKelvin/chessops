@@ -19,11 +19,22 @@ export class TournamentAdminGuard implements CanActivate {
 
     const userId = user.userId || user.sub;
 
-    // Get tournament ID from route params
-    const tournamentId = request.params.id;
+    const tournamentIdOrSlug = request.params.idOrSlug || request.params.id;
 
-    if (!tournamentId) {
+    if (!tournamentIdOrSlug) {
       throw new ForbiddenException('Tournament ID required');
+    }
+
+    let tournamentId = tournamentIdOrSlug;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tournamentIdOrSlug)) {
+      const tournament = await this.prisma.tournament.findUnique({
+        where: { slug: tournamentIdOrSlug },
+        select: { id: true },
+      });
+      if (!tournament) {
+        throw new ForbiddenException('Tournament not found');
+      }
+      tournamentId = tournament.id;
     }
 
     // Check if user is tournament owner

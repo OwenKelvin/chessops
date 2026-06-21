@@ -51,99 +51,110 @@ export class TournamentController {
     return this.tournamentService.findAll(userId, filters);
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return this.tournamentService.findOne(id);
+  @Get(':idOrSlug')
+  async findOne(@Param('idOrSlug') idOrSlug: string) {
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)) {
+      return this.tournamentService.findOne(idOrSlug);
+    }
+    return this.tournamentService.findBySlug(idOrSlug);
   }
 
-  @Patch(':id')
+  @Get('by-slug/:slug')
+  async findBySlug(@Param('slug') slug: string) {
+    return this.tournamentService.findBySlug(slug);
+  }
+
+  @Patch(':idOrSlug')
   @UseGuards(JwtAuthGuard)
   async update(
     @Req() req: any,
-    @Param('id') id: string,
+    @Param('idOrSlug') idOrSlug: string,
     @Body() updateDto: UpdateTournamentDto,
   ) {
-    return this.tournamentService.update(id, req.user.userId, updateDto);
+    return this.tournamentService.update(idOrSlug, req.user.userId, updateDto);
   }
 
-  @Delete(':id')
+  @Delete(':idOrSlug')
   @UseGuards(JwtAuthGuard)
-  async delete(@Req() req: any, @Param('id') id: string) {
-    return this.tournamentService.delete(id, req.user.userId);
+  async delete(@Req() req: any, @Param('idOrSlug') idOrSlug: string) {
+    return this.tournamentService.delete(idOrSlug, req.user.userId);
   }
 
   // Player management - all require auth (owner or admin)
-  @Post(':id/players')
+  @Post(':idOrSlug/players')
   @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async addPlayer(
     @Req() req: any,
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Body() body: { playerId: string; seed?: number; rating?: number },
   ) {
     if (!body.playerId) {
       throw new BadRequestException('playerId is required');
     }
     return this.tournamentService.addPlayer(
-      tournamentId,
+      tournamentIdOrSlug,
       body.playerId,
       body.seed,
       body.rating,
     );
   }
 
-  @Delete(':id/players/:playerId')
+  @Delete(':idOrSlug/players/:playerId')
   @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async removePlayer(
     @Req() req: any,
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Param('playerId') playerId: string,
   ) {
-    return this.tournamentService.removePlayer(tournamentId, playerId, req.user.userId);
+    return this.tournamentService.removePlayer(tournamentIdOrSlug, playerId, req.user.userId);
   }
 
-  @Post(':id/players/:playerId/withdraw')
+  @Post(':idOrSlug/players/:playerId/withdraw')
   @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async withdrawPlayer(
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Param('playerId') playerId: string,
     @Body() body: { roundNumber?: number },
   ) {
-    return this.tournamentService.withdrawPlayer(tournamentId, playerId, body.roundNumber);
+    return this.tournamentService.withdrawPlayer(tournamentIdOrSlug, playerId, body.roundNumber);
   }
 
   // Round management - all require auth
-  @Post(':id/rounds')
+  @Post(':idOrSlug/rounds')
   @UseGuards(JwtAuthGuard)
   async createRound(
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Body() body: { roundNumber: number; name?: string },
   ) {
     if (!body.roundNumber) {
       throw new BadRequestException('roundNumber is required');
     }
-    return this.tournamentService.createRound(tournamentId, body.roundNumber, body.name);
+    return this.tournamentService.createRound(tournamentIdOrSlug, body.roundNumber, body.name);
   }
 
-  @Post(':id/rounds/:roundId/publish')
+  @Post(':idOrSlug/rounds/:roundId/publish')
   @UseGuards(JwtAuthGuard)
   async publishRound(
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Param('roundId') roundId: string,
   ) {
-    return this.tournamentService.publishRound(tournamentId, roundId);
+    return this.tournamentService.publishRound(tournamentIdOrSlug, roundId);
   }
 
-  @Post(':id/rounds/:roundId/complete')
+  @Post(':idOrSlug/rounds/:roundId/complete')
   @UseGuards(JwtAuthGuard)
-  async completeRound(@Param('roundId') roundId: string) {
-    return this.tournamentService.completeRound(roundId);
+  async completeRound(
+    @Param('idOrSlug') tournamentIdOrSlug: string,
+    @Param('roundId') roundId: string,
+  ) {
+    return this.tournamentService.completeRound(tournamentIdOrSlug, roundId);
   }
 
   // Pairing management - all require auth
-  @Post(':id/pairings')
+  @Post(':idOrSlug/pairings')
   @UseGuards(JwtAuthGuard)
   async createPairing(
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Body() body: { roundId: string; whiteId: string; blackId: string; boardNumber?: number },
   ) {
     if (!body.roundId || !body.whiteId || !body.blackId) {
@@ -157,10 +168,10 @@ export class TournamentController {
     );
   }
 
-  @Post(':id/results')
+  @Post(':idOrSlug/results')
   @UseGuards(JwtAuthGuard)
   async submitResult(
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Body() body: { pairingId: string; result: string },
   ) {
     if (!body.pairingId || !body.result) {
@@ -170,32 +181,32 @@ export class TournamentController {
   }
 
   // Admin management endpoints
-  @Get(':id/admins')
-  async getAdmins(@Param('id') id: string) {
-    return this.tournamentService.getAdmins(id);
+  @Get(':idOrSlug/admins')
+  async getAdmins(@Param('idOrSlug') tournamentIdOrSlug: string) {
+    return this.tournamentService.getAdmins(tournamentIdOrSlug);
   }
 
-  @Post(':id/admins')
+  @Post(':idOrSlug/admins')
   @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async assignAdmin(
     @Req() req: any,
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Body() body: { playerId: string },
   ) {
     if (!body.playerId) {
       throw new BadRequestException('playerId is required');
     }
-    return this.tournamentService.assignAdmin(tournamentId, body.playerId, req.user.userId);
+    return this.tournamentService.assignAdmin(tournamentIdOrSlug, body.playerId, req.user.userId);
   }
 
-  @Delete(':id/admins/:playerId')
+  @Delete(':idOrSlug/admins/:playerId')
   @UseGuards(JwtAuthGuard, TournamentAdminGuard)
   async revokeAdmin(
     @Req() req: any,
-    @Param('id') tournamentId: string,
+    @Param('idOrSlug') tournamentIdOrSlug: string,
     @Param('playerId') playerId: string,
   ) {
-    return this.tournamentService.revokeAdmin(tournamentId, playerId, req.user.userId);
+    return this.tournamentService.revokeAdmin(tournamentIdOrSlug, playerId, req.user.userId);
   }
 
 }

@@ -73,14 +73,14 @@ const STATUS_LABEL: Record<string, string> = {
             </div>
             <div class="flex gap-2">
               <a
-                [routerLink]="['/tournaments', t.id]"
+                [routerLink]="['/tournaments', t.slug || t.id]"
                 class="px-4 py-2 text-sm font-semibold text-foreground rounded-lg
                         hover:bg-surface transition-colors"
               >
                 View Public Page
               </a>
               <a
-                [routerLink]="['/tournaments', t.id, 'standings']"
+                [routerLink]="['/tournaments', t.slug || t.id, 'standings']"
                 class="px-4 py-2 text-sm font-semibold bg-surface border border-border
                         rounded-lg hover:bg-surface-elevated transition-colors"
               >
@@ -290,27 +290,27 @@ export class TournamentManageComponent implements OnInit {
   }
 
   private navigateToPlayers(): void {
-    const id = this.tournament()?.id;
+    const id = this.tournament()?.slug || this.tournament()?.id;
     if (id) this.router.navigate(['/tournaments', id, 'players']);
   }
 
   private navigateToAdmins(): void {
-    const id = this.tournament()?.id;
+    const id = this.tournament()?.slug || this.tournament()?.id;
     if (id) this.router.navigate(['/tournaments', id, 'admins']);
   }
 
   private navigateToRounds(): void {
-    const id = this.tournament()?.id;
+    const id = this.tournament()?.slug || this.tournament()?.id;
     if (id) this.router.navigate(['/tournaments', id, 'rounds']);
   }
 
   private navigateToPairings(): void {
-    const id = this.tournament()?.id;
+    const id = this.tournament()?.slug || this.tournament()?.id;
     if (id) this.router.navigate(['/tournaments', id, 'pairings']);
   }
 
   private navigateToResults(): void {
-    const id = this.tournament()?.id;
+    const id = this.tournament()?.slug || this.tournament()?.id;
     if (id) this.router.navigate(['/tournaments', id, 'results']);
   }
 

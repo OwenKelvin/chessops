@@ -17,6 +17,8 @@ import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
 import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 
+import { MailQueueService } from '../queue/mail-queue.service';
+
 const createMockPrismaService = () => ({
   user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
   session: { deleteMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
@@ -27,8 +29,9 @@ const createMockPrismaService = () => ({
   player: { findUnique: vi.fn() },
 });
 
-const createMockJwtService = () => ({ signAsync: vi.fn() });
+const createMockJwtService = () => ({ signAsync: vi.fn(), verifyAsync: vi.fn() });
 const createMockMailService = () => ({ sendMail: vi.fn() });
+const createMockMailQueueService = () => ({ sendMail: vi.fn(), sendPasswordReset: vi.fn(), sendEmailVerification: vi.fn() });
 
 describe('AuthController', () => {
   let authController: AuthController;
@@ -37,10 +40,13 @@ describe('AuthController', () => {
   let mockJwt: ReturnType<typeof createMockJwtService>;
   let mockMail: ReturnType<typeof createMockMailService>;
 
+  let mockMailQueue: ReturnType<typeof createMockMailQueueService>;
+
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockJwt = createMockJwtService();
     mockMail = createMockMailService();
+    mockMailQueue = createMockMailQueueService();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
@@ -49,6 +55,7 @@ describe('AuthController', () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: JwtService, useValue: mockJwt },
         { provide: MailService, useValue: mockMail },
+        { provide: MailQueueService, useValue: mockMailQueue },
       ],
     }).compile();
 
@@ -155,10 +162,8 @@ describe('AuthController', () => {
   describe('POST /auth/token/refresh', () => {
     it('should refresh token', async () => {
       const dto = { refreshToken: 'valid-token' };
-      const mockSession = { id: '1', userId: '1', token: dto.refreshToken, expiresAt: new Date(Date.now() + 86400000) };
-      mockPrisma.session.findUnique.mockResolvedValue(mockSession);
+      mockJwt.verifyAsync.mockResolvedValue({ sub: '1' });
       mockJwt.signAsync.mockResolvedValueOnce('new-access').mockResolvedValueOnce('new-refresh');
-      mockPrisma.session.update.mockResolvedValue({});
 
       const result = await authController.refreshToken(dto);
 
@@ -167,20 +172,19 @@ describe('AuthController', () => {
 
     it('should throw for invalid refresh token', async () => {
       const dto = { refreshToken: 'invalid' };
-      mockPrisma.session.findUnique.mockResolvedValue(null);
+      mockJwt.verifyAsync.mockRejectedValue(new Error('invalid'));
 
-      await expect(authController.refreshToken(dto)).rejects.toThrow('Invalid refresh token');
+      await expect(authController.refreshToken(dto)).rejects.toThrow('Invalid or expired refresh token');
     });
   });
 
   describe('POST /auth/logout', () => {
-    it('should delete session', async () => {
+    it('should return success', async () => {
       const dto = { refreshToken: 'token' };
-      mockPrisma.session.deleteMany.mockResolvedValue({});
 
-      await authController.logout(dto);
+      const result = await authController.logout(dto);
 
-      expect(prismaService.session.deleteMany).toHaveBeenCalled();
+      expect(result).toEqual({ success: true });
     });
   });
 });

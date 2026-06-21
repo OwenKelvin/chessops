@@ -163,7 +163,7 @@ interface FilterModel {
             <div class="tournament-grid">
               @for (tournament of enrichedTournaments(); track tournament.id) {
                 <a
-                  [routerLink]="['/tournaments', tournament.id]"
+                  [routerLink]="['/tournaments', tournament.slug || tournament.id]"
                   class="tournament-card"
                 >
                   <div class="tournament-card__header">

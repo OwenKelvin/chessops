@@ -40,22 +40,22 @@
       "dependsOn": ["build"],
       "cache": true,
       "executor": "@nx/js:prune-lockfile",
-      "options": {
-        "buildTarget": "build"
-      },
       "outputs": [
         "{workspaceRoot}/apps/api/dist/package.json",
         "{workspaceRoot}/apps/api/dist/pnpm-lock.yaml"
-      ]
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
     },
     "copy-workspace-modules": {
       "dependsOn": ["build"],
       "cache": true,
       "executor": "@nx/js:copy-workspace-modules",
+      "outputs": ["{workspaceRoot}/apps/api/dist/workspace_modules"],
       "options": {
         "buildTarget": "build"
-      },
-      "outputs": ["{workspaceRoot}/apps/api/dist/workspace_modules"]
+      }
     },
     "prune": {
       "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
@@ -94,10 +94,12 @@
       }
     },
     "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": [
+        "{projectRoot}/{options.coverage.reportsDirectory}",
+        "{workspaceRoot}/coverage/apps/api"
+      ],
       "options": {
-        "reportsDirectory": "coverage/apps/api"
+        "coverage.reportsDirectory": "../../coverage/apps/api"
       }
     }
   }

@@ -46,6 +46,7 @@ interface TournamentPlayer {
 
 interface Tournament {
   id: string;
+  slug?: string;
   name: string;
   players?: TournamentPlayer[];
   maxPlayers?: number;
@@ -103,7 +104,7 @@ const STATUS_LABEL: Record<string, string> = {
             <div>
               <div class="flex items-center gap-2 mb-1">
                 <a
-                  [routerLink]="['/tournaments', t.id, 'manage']"
+                  [routerLink]="['/tournaments', t.slug || t.id, 'manage']"
                   class="text-muted hover:text-primary transition-colors"
                 >
                   ← Back to Manage

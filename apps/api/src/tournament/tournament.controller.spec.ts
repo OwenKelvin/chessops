@@ -11,13 +11,19 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WebhookService } from '../webhook/webhook.service';
 import { BadRequestException } from '@nestjs/common';
 
+import { JwtService } from '@nestjs/jwt';
+import { TournamentAdminGuard } from './guards/tournament-admin.guard';
+
+const createMockJwtService = () => ({ signAsync: vi.fn(), verifyAsync: vi.fn(), decode: vi.fn() });
+
 const createMockPrismaService = () => ({
-  tournament: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), findMany: vi.fn() },
-  tournamentPlayer: { create: vi.fn(), delete: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn() },
+  tournament: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn(), findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() },
+  tournamentPlayer: { create: vi.fn(), delete: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
   round: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
   pairing: { create: vi.fn(), findMany: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
   user: { findUnique: vi.fn() },
   result: { create: vi.fn() },
+  player: { findUnique: vi.fn() },
 });
 
 const createMockWebhookService = () => ({ publish: vi.fn() });
@@ -28,16 +34,21 @@ describe('TournamentController', () => {
   let mockPrisma: ReturnType<typeof createMockPrismaService>;
   let mockWebhook: ReturnType<typeof createMockWebhookService>;
 
+  let mockJwt: ReturnType<typeof createMockJwtService>;
+
   beforeEach(async () => {
     mockPrisma = createMockPrismaService();
     mockWebhook = createMockWebhookService();
+    mockJwt = createMockJwtService();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TournamentController],
       providers: [
         TournamentService,
+        TournamentAdminGuard,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: WebhookService, useValue: mockWebhook },
+        { provide: JwtService, useValue: mockJwt },
       ],
     }).compile();
 
@@ -64,10 +75,11 @@ describe('TournamentController', () => {
       const req = { user: { userId: '1' } };
       const mock = [{ id: '1', name: 'T1' }];
       mockPrisma.tournament.findMany.mockResolvedValue(mock);
+      mockPrisma.tournament.count.mockResolvedValue(1);
 
       const result = await controller.findAll(req);
 
-      expect(result).toEqual(mock);
+      expect(result).toEqual({ tournaments: mock, total: 1 });
     });
   });
 
@@ -104,6 +116,7 @@ describe('TournamentController', () => {
   describe('DELETE /tournaments/:id/players/:playerId', () => {
     it('should remove player', async () => {
       const req = { user: { userId: '1' } };
+      mockPrisma.tournament.findUnique.mockResolvedValue({ id: '1' });
       mockPrisma.tournamentPlayer.deleteMany.mockResolvedValue({});
 
       await controller.removePlayer(req, '1', 'p1');

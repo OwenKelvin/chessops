@@ -13,8 +13,8 @@ export class TiebreakController {
    * Get full standings with all tiebreak calculations
    */
   @Get()
-  async getStandings(@Param('tournamentId') tournamentId: string) {
-    return this.tiebreakService.calculateStandings(tournamentId);
+  async getStandings(@Param('tournamentId') tournamentIdOrSlug: string) {
+    return this.tiebreakService.calculateStandings(tournamentIdOrSlug);
   }
 
   /**
@@ -22,10 +22,10 @@ export class TiebreakController {
    */
   @Get(':playerId/details')
   async getTiebreakDetails(
-    @Param('tournamentId') tournamentId: string,
+    @Param('tournamentId') tournamentIdOrSlug: string,
     @Param('playerId') playerId: string,
   ) {
-    return this.tiebreakService.getTiebreakDetails(tournamentId, playerId);
+    return this.tiebreakService.getTiebreakDetails(tournamentIdOrSlug, playerId);
   }
 
   /**
@@ -33,10 +33,10 @@ export class TiebreakController {
    */
   @Get('by/:tiebreak')
   async getByTiebreak(
-    @Param('tournamentId') tournamentId: string,
+    @Param('tournamentId') tournamentIdOrSlug: string,
     @Param('tiebreak') tiebreak: string,
   ) {
-    const standings = await this.tiebreakService.calculateStandings(tournamentId);
+    const standings = await this.tiebreakService.calculateStandings(tournamentIdOrSlug);
 
     const tiebreakMap: Record<string, (s: any) => number> = {
       buchholz: (s) => s.tiebreaks.buchholz,
@@ -60,7 +60,7 @@ export class TiebreakController {
     });
 
     return {
-      tournamentId,
+      tournamentId: standings.tournamentId,
       sortedBy: tiebreak,
       standings: standings.standings,
     };

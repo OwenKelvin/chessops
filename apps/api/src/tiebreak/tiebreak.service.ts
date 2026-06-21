@@ -54,7 +54,19 @@ export class TiebreakService {
   /**
    * Calculate comprehensive standings with all tiebreak systems
    */
-  async calculateStandings(tournamentId: string): Promise<StandingsWithTiebreaks> {
+  async calculateStandings(tournamentIdOrSlug: string): Promise<StandingsWithTiebreaks> {
+    let tournamentId = tournamentIdOrSlug;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tournamentIdOrSlug)) {
+      const tournament = await this.prisma.tournament.findUnique({
+        where: { slug: tournamentIdOrSlug },
+        select: { id: true },
+      });
+      if (!tournament) {
+        throw new NotFoundException('Tournament not found');
+      }
+      tournamentId = tournament.id;
+    }
+
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
       include: {
@@ -348,8 +360,8 @@ export class TiebreakService {
   /**
    * Get detailed tiebreak explanation for a specific player
    */
-  async getTiebreakDetails(tournamentId: string, playerId: string) {
-    const standings = await this.calculateStandings(tournamentId);
+  async getTiebreakDetails(tournamentIdOrSlug: string, playerId: string) {
+    const standings = await this.calculateStandings(tournamentIdOrSlug);
     const playerStanding = standings.standings.find((s) => s.playerId === playerId);
 
     if (!playerStanding) {
@@ -358,7 +370,7 @@ export class TiebreakService {
 
     // Get detailed opponent information
     const tournamentPlayers = await this.prisma.tournamentPlayer.findMany({
-      where: { tournamentId },
+      where: { tournamentId: standings.tournamentId },
       include: {
         player: true,
         results: true,

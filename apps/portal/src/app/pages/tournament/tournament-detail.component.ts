@@ -99,14 +99,14 @@ import { BadgeComponent } from '@chessops/ui/badge';
 
         <!-- Actions -->
         <section class="actions-section">
-          <a [routerLink]="['/tournaments', t.id, 'standings']" class="btn btn-primary">
+          <a [routerLink]="['/tournaments', t.slug || t.id, 'standings']" class="btn btn-primary">
             View Standings
           </a>
           @if (isOwner()) {
-            <a [routerLink]="['/tournaments', t.id, 'manage']" class="btn btn-secondary">
+            <a [routerLink]="['/tournaments', t.slug || t.id, 'manage']" class="btn btn-secondary">
               Manage Tournament
             </a>
-            <a [routerLink]="['/tournaments', t.id, 'admins']" class="btn btn-secondary">
+            <a [routerLink]="['/tournaments', t.slug || t.id, 'admins']" class="btn btn-secondary">
               Manage Admins
             </a>
           }

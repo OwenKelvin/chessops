@@ -10,7 +10,7 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(cuid())
+  id              String          @id @default(uuid())
   email           String          @unique
   passwordHash    String?
   displayName     String?
@@ -34,7 +34,7 @@ model User {
 }
 
 model OauthAccount {
-  id                String   @id @default(cuid())
+  id                String   @id @default(uuid())
   userId            String
   provider          String   // "google" | "github"
   providerAccountId String   // User's ID with the provider
@@ -50,7 +50,7 @@ model OauthAccount {
 }
 
 model MfaSecret {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   userId       String   @unique
   secret       String
   backupCodes  String   // JSON array of backup codes
@@ -64,7 +64,7 @@ model MfaSecret {
 }
 
 model AccountRecovery {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
   token     String   @unique
   expiresAt DateTime
@@ -78,7 +78,7 @@ model AccountRecovery {
 }
 
 model EmailVerification {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String   @unique
   token     String   @unique
   expiresAt DateTime
@@ -92,7 +92,7 @@ model EmailVerification {
 }
 
 model ApiKey {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   userId      String
   name        String   // User-friendly name for the key
   keyHash     String   @unique // Hashed API key (store sha256 of key)
@@ -111,7 +111,7 @@ model ApiKey {
 }
 
 model App {
-  id              String   @id @default(cuid())
+  id              String   @id @default(uuid())
   userId          String
   name            String
   description     String?
@@ -133,7 +133,7 @@ model App {
 }
 
 model WebhookEvent {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   type      String   // e.g., "tournament.created", "match.completed"
   payload   String   // JSON payload
   createdAt DateTime @default(now())
@@ -145,7 +145,7 @@ model WebhookEvent {
 }
 
 model WebhookDelivery {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   eventId     String
   appId       String
   status      String   @default("pending") // pending, success, failed
@@ -170,7 +170,8 @@ model WebhookDelivery {
 // Tournament Models
 
 model Tournament {
-  id              String   @id @default(cuid())
+  id              String   @id @default(uuid())
+  slug            String   @unique
   ownerId         String   // User who created the tournament
   name            String
   description     String?
@@ -198,10 +199,11 @@ model Tournament {
   @@index([status])
   @@index([startDate])
   @@index([country])
+  @@index([slug])
 }
 
 model TournamentAdmin {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   tournamentId  String
   playerId      String
   createdAt     DateTime @default(now())
@@ -214,7 +216,7 @@ model TournamentAdmin {
 }
 
 model TournamentPlayer {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   tournamentId  String
   playerId      String   // Reference to Player model
   seed          Int      @default(0)
@@ -233,7 +235,7 @@ model TournamentPlayer {
 }
 
 model Player {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   ownerId       String   // User who owns this player profile
   firstName     String
   lastName      String
@@ -258,7 +260,7 @@ model Player {
 }
 
 model Round {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   tournamentId  String
   roundNumber   Int
   name          String?
@@ -275,7 +277,7 @@ model Round {
 }
 
 model Pairing {
-  id            String   @id @default(cuid())
+  id            String   @id @default(uuid())
   roundId       String
   whiteId       String   // Player ID
   blackId       String   // Player ID
@@ -297,7 +299,7 @@ model Pairing {
 }
 
 model Result {
-  id                 String   @id @default(cuid())
+  id                 String   @id @default(uuid())
   tournamentId       String
   playerId           String
   tournamentPlayerId String   @unique
@@ -315,7 +317,7 @@ model Result {
 }
 
 model Country {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   name        String   @unique
   code        String   @unique // ISO 3166-1 alpha-2 code (e.g., "US", "DE")
   dialCode    String?  // Optional dial code (e.g., "+1", "+49")
